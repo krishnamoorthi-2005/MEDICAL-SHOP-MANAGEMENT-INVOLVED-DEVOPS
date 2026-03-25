@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { TrendingUp, DollarSign, PackageX, AlertTriangle, Download } from 'lucide-react';
+import { TrendingUp, DollarSign, PackageX, AlertTriangle, Download, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +21,7 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { getReportsAnalytics, resetExpiryLoss } from '@/lib/api';
+import { getReportsAnalytics, resetExpiryLoss, generateTestData } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 type ReportData = {
@@ -38,6 +38,7 @@ type ReportData = {
 };
 
 const PIE_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#ef4444', '#6b7280'];
+const STANDARD_PAYMENT_MODES = ['cash', 'upi', 'card'] as const;
 
 export default function Reports() {
   const navigate = useNavigate();
@@ -47,16 +48,50 @@ export default function Reports() {
 
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState<ReportData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [generatingTestData, setGeneratingTestData] = useState(false);
+
+  const handleGenerateTestData = async () => {
+    try {
+      setGeneratingTestData(true);
+      await generateTestData();
+      toast({
+        title: 'Test Data Generated',
+        description: 'Sample sales data has been created. Refreshing reports...',
+        variant: 'default'
+      });
+      // Refresh the reports after generating test data
+      const data = await getReportsAnalytics({ range: dateRange as any });
+      setReport(data);
+    } catch (e: any) {
+      console.error('Failed to generate test data:', e);
+      toast({
+        title: 'Error',
+        description: e?.message || 'Failed to generate test data',
+        variant: 'destructive'
+      });
+    } finally {
+      setGeneratingTestData(false);
+    }
+  };
 
   useEffect(() => {
     const run = async () => {
       try {
         setLoading(true);
+        setError(null);
         const data = await getReportsAnalytics({ range: dateRange as any });
         setReport(data);
-      } catch (e) {
+      } catch (e: any) {
         console.error('Failed to load reports analytics:', e);
         setReport(null);
+        const errorMsg = e?.message || 'Failed to load reports. Please try again.';
+        setError(errorMsg);
+        toast({
+          title: 'Error Loading Reports',
+          description: errorMsg,
+          variant: 'destructive'
+        });
       } finally {
         setLoading(false);
       }
@@ -106,21 +141,34 @@ export default function Reports() {
   const expiryLoss = report?.expiryLoss || 0;
   const expiredItemCount = report?.expiredItemCount || 0;
 
-  const paymentModes = report?.paymentModes || [];
-  const paymentModeChart = paymentModes.map((p) => ({ name: p.mode.toUpperCase(), value: p.total, count: p.count }));
+  // Ensure arrays are always arrays, never undefined
+  const paymentModesFromApi = report?.paymentModes ? (Array.isArray(report.paymentModes) ? report.paymentModes : []) : [];
+  const dailySalesData = report?.dailySales ? (Array.isArray(report.dailySales) ? report.dailySales : []) : [];
+  const topSellingItemsData = report?.topSellingItems ? (Array.isArray(report.topSellingItems) ? report.topSellingItems : []) : [];
+  const recentInvoicesData = report?.recentInvoices ? (Array.isArray(report.recentInvoices) ? report.recentInvoices : []) : [];
+
+  const paymentModes = [
+    ...STANDARD_PAYMENT_MODES.map((mode) => {
+      const match = paymentModesFromApi.find((item) => (item.mode || '').toLowerCase() === mode);
+      return match || { mode, count: 0, total: 0 };
+    }),
+    ...paymentModesFromApi.filter((item) => !STANDARD_PAYMENT_MODES.includes((item.mode || '').toLowerCase() as any)),
+  ];
+
+  const paymentModeChart = paymentModes.map((p) => ({ name: p.mode?.toUpperCase?.() || 'Unknown', value: p.total || 0, count: p.count || 0 }));
 
   const filteredInvoices = useMemo(() => {
-    const invoices = report?.recentInvoices || [];
+    const invoices = recentInvoicesData;
     if (!selectedPaymentMode) return invoices;
     return invoices.filter((i) => (i.paymentMethod || '').toLowerCase() === selectedPaymentMode.toLowerCase());
-  }, [report, selectedPaymentMode]);
+  }, [recentInvoicesData, selectedPaymentMode]);
 
   const exportInvoicesCsv = () => {
     if (!report) return;
     const rows = [
       ['invoiceNumber', 'date', 'total', 'paymentMethod', 'items'],
       ...filteredInvoices.map((i) => [
-        i.invoiceNumber,
+        i.invoiceNumber || '',
         i.createdAt ? format(new Date(i.createdAt), 'yyyy-MM-dd HH:mm') : '',
         String(i.total ?? 0),
         String(i.paymentMethod ?? ''),
@@ -142,14 +190,12 @@ export default function Reports() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          {/* ... header ... */}
-          <h1 className="text-2xl font-bold tracking-tight">Reports</h1>
-          <p className="text-muted-foreground/70 font-medium">Business intelligence and analytics</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Reports</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Business intelligence and analytics</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* ... selects ... */}
           <Select value={dateRange} onValueChange={setDateRange}>
             <SelectTrigger className="w-40">
               <SelectValue />
@@ -160,12 +206,31 @@ export default function Reports() {
               <SelectItem value="90days">Last 90 Days</SelectItem>
             </SelectContent>
           </Select>
+          {!report && !loading && (
+            <Button variant="secondary" size="sm" onClick={handleGenerateTestData} disabled={generatingTestData}>
+              <Zap className="mr-2 h-4 w-4" />
+              {generatingTestData ? 'Generating...' : 'Generate Test Data'}
+            </Button>
+          )}
           <Button variant="outline" disabled>
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
         </div>
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-destructive">Failed to Load Reports</p>
+              <p className="text-sm text-destructive/80 mt-1">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center gap-2">
         <Select value={selectedPaymentMode || 'all'} onValueChange={(v) => setSelectedPaymentMode(v === 'all' ? null : v)}>
@@ -175,7 +240,7 @@ export default function Reports() {
           <SelectContent>
             <SelectItem value="all">All payment modes</SelectItem>
             {paymentModes.map((p) => (
-              <SelectItem key={p.mode} value={p.mode}>{p.mode.toUpperCase()} ({p.count})</SelectItem>
+              <SelectItem key={p.mode || 'unknown'} value={p.mode || 'unknown'}>{(p.mode || 'Unknown').toUpperCase()} ({p.count || 0})</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -186,77 +251,37 @@ export default function Reports() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="micro-interaction">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-                <TrendingUp className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Total Sales</div>
-                <div className="text-2xl font-semibold">{loading ? '…' : `₹${totalSales.toLocaleString()}`}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="micro-interaction">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-                <DollarSign className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Net Profit</div>
-                <div className="text-2xl font-semibold">{loading ? '…' : `₹${netProfit.toLocaleString()}`}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="micro-interaction cursor-pointer hover:shadow-md transition"
-          onClick={() => navigate('/reports/dead-stock')}
-        >
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100">
-                <PackageX className="h-6 w-6 text-gray-600" />
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Dead Stock</div>
-                <div className="text-2xl font-semibold">{loading ? '…' : deadStockItems}</div>
-                <div className="text-xs text-muted-foreground">items unsold 7+ days</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="micro-interaction cursor-pointer hover:shadow-md transition"
-          onClick={() => navigate('/reports/expiry-loss')}
-        >
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Expiry Loss</div>
-                <div className="text-2xl font-semibold">{loading ? '…' : `₹${expiryLoss.toLocaleString()}`}</div>
-                {!loading && report && (
-                  <div className="text-xs text-muted-foreground">{report.expiredItemCount} items expired in stock</div>
-                )}
-                <div className="mt-2 flex gap-2">
-                  <Button size="xs" variant="outline" onClick={(e) => { e.stopPropagation(); handleResetExpiryLoss(); }}>
-                    Reset
-                  </Button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {[
+          { label: 'Total Sales', value: loading ? '…' : `₹${totalSales.toLocaleString()}`, icon: TrendingUp, gradient: 'from-indigo-500 to-violet-600', onClick: undefined },
+          { label: 'Net Profit', value: loading ? '…' : `₹${netProfit.toLocaleString()}`, icon: DollarSign, gradient: 'from-emerald-500 to-teal-600', onClick: undefined },
+          { label: 'Dead Stock', value: loading ? '…' : String(deadStockItems), sub: 'items unsold 7+ days', icon: PackageX, gradient: deadStockItems > 0 ? 'from-amber-500 to-orange-600' : 'from-slate-400 to-slate-500', onClick: () => navigate('/reports/dead-stock') },
+          { label: 'Expiry Loss', value: loading ? '…' : `₹${expiryLoss.toLocaleString()}`, sub: !loading && report ? `${report.expiredItemCount} items expired` : undefined, icon: AlertTriangle, gradient: expiryLoss > 0 ? 'from-red-500 to-rose-600' : 'from-slate-400 to-slate-500', onClick: () => navigate('/reports/expiry-loss'), extra: true },
+        ].map((card, i) => (
+          <div key={i}
+            className={`relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br ${card.gradient} text-white transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl ${card.onClick ? 'cursor-pointer' : ''}`}
+            style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }}
+            onClick={card.onClick}>
+            <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-white/10" />
+            <div className="relative z-10">
+              <div className="flex items-start justify-between mb-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-white/70">{card.label}</p>
+                <div className="p-2 rounded-xl bg-white/20">
+                  <card.icon className="h-4 w-4 text-white" />
                 </div>
               </div>
+              <p className="text-3xl font-extrabold text-white tracking-tight mb-1">{card.value}</p>
+              {card.sub && <p className="text-xs text-white/70 font-medium">{card.sub}</p>}
+              {card.extra && (
+                <button
+                  className="mt-3 px-3 py-1 rounded-lg text-xs font-bold bg-white/20 hover:bg-white/30 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); handleResetExpiryLoss(); }}>
+                  Reset
+                </button>
+              )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        ))}
       </div>
 
       {/* Charts Row */}
@@ -279,7 +304,7 @@ export default function Reports() {
               <div className="h-72 flex items-center justify-center flex-col border-2 border-dashed rounded-lg border-muted">
                 <p className="text-muted-foreground font-medium">Loading sales data…</p>
               </div>
-            ) : report.dailySales.length === 0 ? (
+            ) : dailySalesData.length === 0 ? (
               <div className="h-72 flex items-center justify-center flex-col border-2 border-dashed rounded-lg border-muted">
                 <p className="text-muted-foreground font-medium">No sales data recorded yet</p>
                 <p className="text-xs text-muted-foreground">Transactions will appear here once you start billing</p>
@@ -287,7 +312,7 @@ export default function Reports() {
             ) : (
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={report.dailySales} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <LineChart data={dailySalesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       dataKey="date" 
@@ -345,11 +370,11 @@ export default function Reports() {
                 {/* Always show available payment modes (even if 0) */}
                 <div className="space-y-2">
                   {paymentModes.map((p, idx) => (
-                    <div key={p.mode} className="flex items-center justify-between text-sm">
+                    <div key={p.mode || `payment-${idx}`} className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
                         <div className="h-2.5 w-2.5 rounded-full" style={{ background: PIE_COLORS[idx % PIE_COLORS.length] }} />
-                        <span className="font-medium">{p.mode.toUpperCase()}</span>
-                        <span className="text-muted-foreground">({p.count})</span>
+                        <span className="font-medium">{(p.mode || 'Unknown').toUpperCase()}</span>
+                        <span className="text-muted-foreground">({p.count || 0})</span>
                       </div>
                       <div className="font-semibold">₹{(p.total || 0).toLocaleString()}</div>
                     </div>
@@ -374,19 +399,19 @@ export default function Reports() {
               <div className="h-64 flex items-center justify-center flex-col text-muted-foreground border-2 border-dashed rounded-lg border-muted">
                 <p>Loading…</p>
               </div>
-            ) : report.topSellingItems.length === 0 ? (
+            ) : topSellingItemsData.length === 0 ? (
               <div className="h-64 flex items-center justify-center flex-col text-muted-foreground border-2 border-dashed rounded-lg border-muted">
                 <p>No items sold</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {report.topSellingItems.slice(0, 8).map((item) => (
+                {topSellingItemsData.slice(0, 8).map((item) => (
                   <div key={item.name} className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="font-medium text-sm">{item.name}</div>
-                      <div className="text-xs text-muted-foreground">{item.quantity} sold</div>
+                      <div className="font-medium text-sm">{item.name || 'Unknown Item'}</div>
+                      <div className="text-xs text-muted-foreground">{item.quantity || 0} sold</div>
                     </div>
-                    <div className="font-bold text-sm">₹{item.revenue.toLocaleString()}</div>
+                    <div className="font-bold text-sm">₹{(item.revenue || 0).toLocaleString()}</div>
                   </div>
                 ))}
               </div>
@@ -429,11 +454,11 @@ export default function Reports() {
                 </TableHeader>
                 <TableBody>
                   {filteredInvoices.slice(0, 15).map((inv) => (
-                    <TableRow key={inv.invoiceNumber}>
-                      <TableCell className="font-medium">{inv.invoiceNumber}</TableCell>
+                    <TableRow key={inv.invoiceNumber || Math.random()}>
+                      <TableCell className="font-medium">{inv.invoiceNumber || '-'}</TableCell>
                       <TableCell>{inv.createdAt ? format(new Date(inv.createdAt), 'dd MMM yyyy, HH:mm') : '-'}</TableCell>
                       <TableCell>{(inv.paymentMethod || '-').toUpperCase()}</TableCell>
-                      <TableCell className="text-center">{inv.items}</TableCell>
+                      <TableCell className="text-center">{inv.items || 0}</TableCell>
                       <TableCell className="text-right font-semibold">₹{(inv.total || 0).toLocaleString()}</TableCell>
                     </TableRow>
                   ))}

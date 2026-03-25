@@ -178,5 +178,9 @@ stockLedgerSchema.statics.recordMovement = async function recordMovement(data) {
 
 stockLedgerSchema.index({ medicineId: 1, batchId: 1, createdAt: -1 });
 stockLedgerSchema.index({ type: 1, createdAt: -1 });
+// Additional indexes for high-concurrency aggregation queries
+stockLedgerSchema.index({ medicineId: 1, createdAt: -1 });
+stockLedgerSchema.index({ batchId: 1, type: 1 });
+stockLedgerSchema.index({ type: 1, medicineId: 1, createdAt: -1 });
 
 export default mongoose.model('StockLedger', stockLedgerSchema, 'stockledgers');

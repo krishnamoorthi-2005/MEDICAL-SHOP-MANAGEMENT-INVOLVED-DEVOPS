@@ -17,69 +17,53 @@ export const searchMedicines = async (req, res) => {
       return res.json({ success: true, data: [] });
     }
 
-    // First, get generics and manufacturers matching the query
-    const matchingGenerics = await Generic.find({
-      name: { $regex: q, $options: 'i' }
-    }).select('_id').lean();
-    const genericIds = matchingGenerics.map(g => g._id);
+    // Run generic/manufacturer lookups in parallel
+    const [matchingGenerics, matchingManufacturers] = await Promise.all([
+      Generic.find({ name: { $regex: q, $options: 'i' } }).select('_id').lean(),
+      Manufacturer.find({ name: { $regex: q, $options: 'i' } }).select('_id').lean(),
+    ]);
 
-    const matchingManufacturers = await Manufacturer.find({
-      name: { $regex: q, $options: 'i' }
-    }).select('_id').lean();
-    const manufacturerIds = matchingManufacturers.map(m => m._id);
-
-    // Build comprehensive search query with OR conditions
     const searchConditions = [
-      { name: { $regex: q, $options: 'i' } }, // Search by medicine name
-      { category: { $regex: q, $options: 'i' } }, // Search by category
+      { name: { $regex: q, $options: 'i' } },
+      { category: { $regex: q, $options: 'i' } },
     ];
+    if (matchingGenerics.length > 0) searchConditions.push({ genericId: { $in: matchingGenerics.map(g => g._id) } });
+    if (matchingManufacturers.length > 0) searchConditions.push({ manufacturerId: { $in: matchingManufacturers.map(m => m._id) } });
 
-    if (genericIds.length > 0) {
-      searchConditions.push({ genericId: { $in: genericIds } }); // Search by generic/salt name
-    }
-
-    if (manufacturerIds.length > 0) {
-      searchConditions.push({ manufacturerId: { $in: manufacturerIds } }); // Search by manufacturer
-    }
-
-    const medicines = await Medicine.find({
-      $or: searchConditions,
-      discontinued: { $ne: true },
-    })
+    const medicines = await Medicine.find({ $or: searchConditions, discontinued: { $ne: true } })
       .limit(20)
       .populate('genericId', 'name')
       .populate('manufacturerId', 'name')
       .lean();
 
-    const results = [];
-    for (const med of medicines) {
-      const batches = await Batch.find({
-        medicineId: med._id,
-      })
-        .sort({ expiryDate: 1 })
-        .lean();
+    if (medicines.length === 0) return res.json({ success: true, data: [] });
 
-      const batchIds = batches.map((b) => b._id);
-      const ledger = await StockLedger.aggregate([
-        { $match: { medicineId: med._id, batchId: { $in: batchIds } } },
+    const medicineIds = medicines.map(m => m._id);
+
+    // Single batch query for ALL batches and ALL ledger balances
+    const [allBatches, ledgerBalances] = await Promise.all([
+      Batch.find({ medicineId: { $in: medicineIds } }).sort({ expiryDate: 1 }).lean(),
+      StockLedger.aggregate([
+        { $match: { medicineId: { $in: medicineIds } } },
         { $group: { _id: '$batchId', quantity: { $sum: '$quantity' } } },
-      ]);
-      const balanceMap = new Map(ledger.map((l) => [l._id.toString(), l.quantity || 0]));
+      ]),
+    ]);
 
-      const activeBatches = batches.filter(
-        (b) => (balanceMap.get(b._id.toString()) || 0) > 0,
-      );
+    const balanceMap = new Map(ledgerBalances.map(l => [l._id.toString(), l.quantity || 0]));
+    const batchesByMed = new Map();
+    for (const b of allBatches) {
+      const key = b.medicineId.toString();
+      if (!batchesByMed.has(key)) batchesByMed.set(key, []);
+      batchesByMed.get(key).push(b);
+    }
 
-      const totalStock = activeBatches.reduce(
-        (sum, b) => sum + (balanceMap.get(b._id.toString()) || 0),
-        0,
-      );
+    const results = medicines.map(med => {
+      const batches = batchesByMed.get(med._id.toString()) || [];
+      const activeBatches = batches.filter(b => (balanceMap.get(b._id.toString()) || 0) > 0);
+      const totalStock = activeBatches.reduce((sum, b) => sum + (balanceMap.get(b._id.toString()) || 0), 0);
+      const mrp = activeBatches[0]?.mrp || 0;
 
-      const firstInStockBatch = activeBatches[0];
-      const mrp = firstInStockBatch ? firstInStockBatch.mrp || 0 : 0;
-
-      // Shape is aligned with billing/frequent-items: _id, name, stock, mrp, inStock, genericId, manufacturerId
-      results.push({
+      return {
         _id: med._id,
         name: med.name,
         genericId: med.genericId,
@@ -92,7 +76,7 @@ export const searchMedicines = async (req, res) => {
         stock: totalStock,
         mrp,
         inStock: totalStock > 0,
-        batches: activeBatches.map((b) => ({
+        batches: activeBatches.map(b => ({
           id: b._id,
           batchNumber: b.batchNumber,
           expiryDate: b.expiryDate,
@@ -100,8 +84,8 @@ export const searchMedicines = async (req, res) => {
           mrp: b.mrp,
           purchasePrice: b.purchasePrice,
         })),
-      });
-    }
+      };
+    });
 
     res.json({ success: true, data: results });
   } catch (error) {
@@ -114,54 +98,43 @@ export const getMedicines = async (req, res) => {
   try {
     const medicines = await Medicine.find({}).populate('manufacturerId', 'name').lean();
 
-    const data = [];
-    for (const med of medicines) {
-      const batches = await Batch.find({
-        medicineId: med._id,
-      })
-        .sort({ expiryDate: 1 })
-        .lean();
+    if (medicines.length === 0) return res.json({ success: true, data: [] });
 
-      const batchIds = batches.map((b) => b._id);
-      const ledger = await StockLedger.aggregate([
-        { $match: { medicineId: med._id, batchId: { $in: batchIds } } },
+    const medicineIds = medicines.map(m => m._id);
+
+    // Single batch query — eliminates N+1
+    const [allBatches, ledgerBalances] = await Promise.all([
+      Batch.find({ medicineId: { $in: medicineIds } }).sort({ expiryDate: 1 }).lean(),
+      StockLedger.aggregate([
+        { $match: { medicineId: { $in: medicineIds } } },
         { $group: { _id: '$batchId', quantity: { $sum: '$quantity' } } },
-      ]);
-      const balanceMap = new Map(ledger.map((l) => [l._id.toString(), l.quantity || 0]));
+      ]),
+    ]);
 
-      const activeBatches = batches.filter(
-        (b) => (balanceMap.get(b._id.toString()) || 0) > 0,
-      );
+    const balanceMap = new Map(ledgerBalances.map(l => [l._id.toString(), l.quantity || 0]));
+    const batchesByMed = new Map();
+    for (const b of allBatches) {
+      const key = b.medicineId.toString();
+      if (!batchesByMed.has(key)) batchesByMed.set(key, []);
+      batchesByMed.get(key).push(b);
+    }
 
-      const totalStock = activeBatches.reduce(
-        (sum, b) => sum + (balanceMap.get(b._id.toString()) || 0),
-        0,
-      );
-      const nearestExpiry =
-        activeBatches.length > 0
-          ? toISODate(
-              activeBatches.reduce(
-                (min, b) => (b.expiryDate && b.expiryDate < min ? b.expiryDate : min),
-                activeBatches[0].expiryDate,
-              ),
-            )
-          : null;
+    const data = medicines.map(med => {
+      const batches = batchesByMed.get(med._id.toString()) || [];
+      const activeBatches = batches.filter(b => (balanceMap.get(b._id.toString()) || 0) > 0);
+      const totalStock = activeBatches.reduce((sum, b) => sum + (balanceMap.get(b._id.toString()) || 0), 0);
 
-      const stockStatus =
-        totalStock === 0
-          ? 'out_of_stock'
-          : totalStock <= (med.minStockLevel || 0)
-          ? 'low_stock'
-          : 'in_stock';
+      const nearestExpiry = activeBatches.length > 0
+        ? toISODate(activeBatches.reduce((min, b) => (b.expiryDate && b.expiryDate < min ? b.expiryDate : min), activeBatches[0].expiryDate))
+        : null;
 
-      // Use the first in-stock batch's MRP as the current
-      // selling price for this medicine. This keeps the
-      // Inventory view and Billing consistent with FEFO
-      // batching logic used elsewhere.
-      const firstInStockBatch = activeBatches[0];
-      const mrp = firstInStockBatch ? firstInStockBatch.mrp || 0 : 0;
+      const stockStatus = totalStock === 0 ? 'out_of_stock'
+        : totalStock <= (med.minStockLevel || 0) ? 'low_stock'
+        : 'in_stock';
 
-      data.push({
+      const mrp = activeBatches[0]?.mrp || 0;
+
+      return {
         id: med._id,
         name: med.name,
         category: med.category,
@@ -173,7 +146,7 @@ export const getMedicines = async (req, res) => {
         manufacturer: med.manufacturerId?.name || 'Unknown',
         stock: totalStock,
         mrp,
-        batches: activeBatches.map((b) => ({
+        batches: activeBatches.map(b => ({
           id: b._id,
           batchNumber: b.batchNumber,
           expiryDate: b.expiryDate,
@@ -185,8 +158,8 @@ export const getMedicines = async (req, res) => {
         nearestExpiry,
         stockStatus,
         createdAt: med.createdAt,
-      });
-    }
+      };
+    });
 
     res.json({ success: true, data });
   } catch (error) {

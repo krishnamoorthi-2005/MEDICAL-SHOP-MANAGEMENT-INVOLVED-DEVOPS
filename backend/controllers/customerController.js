@@ -80,27 +80,29 @@ export const createCustomer = async (req, res) => {
       return res.status(401).json({ success: false, message: 'User not authenticated' });
     }
 
-    // Check if phone already exists for this user
-    const existing = await Customer.findOne({ 
-      phone: phone.trim(),
-      userId: req.user.id 
-    });
-    
-    if (existing) {
-      return res.status(409).json({ success: false, message: 'A customer with this phone number already exists' });
-    }
+    const normalizedPhone = phone.trim();
+    const normalizedEmail = (email || '').trim().toLowerCase();
 
-    const customer = new Customer({ 
-      name, 
-      phone, 
-      email, 
-      address, 
-      dateOfBirth, 
-      notes,
-      userId: req.user.id // Link customer to the logged-in user
-    });
-    
-    await customer.save();
+    // Customers are globally unique by phone. Reuse the existing record if one exists
+    // instead of failing payment flow with a duplicate key error.
+    const customer = await Customer.findOneAndUpdate(
+      { phone: normalizedPhone },
+      {
+        $set: {
+          name: name.trim(),
+          email: normalizedEmail,
+          address: address || '',
+          dateOfBirth: dateOfBirth || undefined,
+          notes: notes || '',
+          isActive: true,
+        },
+        $setOnInsert: {
+          userId: req.user.id,
+        },
+      },
+      { new: true, upsert: true, runValidators: true }
+    );
+
     res.status(201).json({ success: true, customer });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

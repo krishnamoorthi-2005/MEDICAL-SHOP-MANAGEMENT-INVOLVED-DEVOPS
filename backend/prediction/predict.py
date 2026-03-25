@@ -10,13 +10,18 @@ MODELS_PATH = BASE_DIR / "pharmacy_models.pkl"
 
 
 def main() -> None:
+    # Default to predicting next month (13 for annual cycle, or current_month + 1)
     if len(sys.argv) > 1:
         try:
             month = int(sys.argv[1])
         except ValueError:
-            month = datetime.now().month
+            month = 13  # Predict month 13 (next month in cycle)
     else:
-        month = datetime.now().month
+        month = 13  # Default: predict next month
+
+    # Validation: month should be 1-13 (1-12 for historical, 13 for next)
+    if month < 1 or month > 13:
+        raise SystemExit("INVALID_MONTH: Month must be 1-13")
 
     if not MODELS_PATH.exists():
         raise SystemExit("MODEL_NOT_FOUND")

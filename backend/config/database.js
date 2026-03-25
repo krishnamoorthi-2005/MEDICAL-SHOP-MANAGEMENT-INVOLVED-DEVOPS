@@ -21,9 +21,25 @@ const connectDB = async () => {
   const uri = getMongoUri();
 
   try {
-    await mongoose.connect(uri, {
+    // Development: Allow self-signed certificates (MongoDB Atlas)
+    // Production: Remove this option
+    const mongoOptions = {
       autoIndex: true,
-    });
+      maxPoolSize: 100,       // Handle 1000 concurrent users
+      minPoolSize: 10,        // Keep warm connections ready
+      maxIdleTimeMS: 30000,   // Close idle connections after 30s
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
+    };
+
+    // If using Atlas (https), add SSL options for development
+    if (uri.includes('mongodb+srv')) {
+      mongoOptions.ssl = true;
+      mongoOptions.tlsInsecure = process.env.NODE_ENV !== 'production'; // Allow self-signed certs in dev only
+    }
+
+    await mongoose.connect(uri, mongoOptions);
 
     isConnected = true;
     console.log('✅ Connected to MongoDB via Mongoose');

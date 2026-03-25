@@ -2,22 +2,70 @@ import PrescriptionRequest from '../models/PrescriptionRequest.js';
 import path from 'path';
 import fs from 'fs';
 import { createWorker } from 'tesseract.js';
+import sharp from 'sharp';
 
 /* ── OCR helper: extract text then delete image ────────── */
 async function extractTextAndDeleteImage(filename) {
   const imgPath = path.join(process.cwd(), 'uploads', filename);
+  const processedImgPath = path.join(process.cwd(), 'uploads', `processed_${filename}`);
+  
   try {
-    const worker = await createWorker('eng');
-    const { data: { text } } = await worker.recognize(imgPath);
+    // Preprocess image for better OCR accuracy on handwritten text
+    // - Grayscale: Simplifies processing
+    // - Higher contrast: Makes text darker and background lighter
+    // - Sharpen: Enhances text edges for better recognition
+    await sharp(imgPath)
+      .greyscale()
+      .normalize()           // Enhance contrast
+      .sharpen({ sigma: 2 }) // Enhance text edges
+      .toFile(processedImgPath);
+
+    console.log('[OCR] Image preprocessed successfully');
+
+    // Initialize worker with the local language file to avoid remote downloads.
+    const worker = await createWorker('eng', 1, {
+      langPath: process.cwd(),
+    });
+
+    // Handwritten prescriptions usually work better with a single-block layout.
+    await worker.setParameters({
+      tessedit_pageseg_mode: 6,
+      preserve_interword_spaces: '1',
+      user_defined_dpi: '300',
+    });
+
+    const { data: { text, confidence } } = await worker.recognize(processedImgPath);
+
     await worker.terminate();
-    // Delete the image after successful extraction
+
+    console.log(`[OCR] Text extracted - Confidence: ${confidence}%`);
+    console.log(`[OCR] Extracted text (first 100 chars): ${text.substring(0, 100)}`);
+
+    // Clean up processed image
+    if (fs.existsSync(processedImgPath)) fs.unlinkSync(processedImgPath);
+    
+    // Clean up original image
     if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
-    return { text: text.trim(), status: 'done' };
+
+    // Return extracted text with preprocessing applied
+    return { 
+      text: text.trim(), 
+      status: 'done',
+      confidence 
+    };
   } catch (ocrErr) {
     console.error('[OCR] Failed:', ocrErr.message);
-    // Still delete the image even if OCR failed to save space
+    console.error('[OCR] Stack:', ocrErr.stack);
+    
+    // Clean up both images if they exist
+    if (fs.existsSync(processedImgPath)) fs.unlinkSync(processedImgPath);
     if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
-    return { text: '', status: 'failed' };
+
+    return { 
+      text: '', 
+      status: 'failed',
+      error: ocrErr.message 
+    };
   }
 }
 
@@ -83,7 +131,14 @@ export const createPrescription = async (req, res) => {
     }
 
     // Run OCR and delete image immediately — no image stored in DB
-    const { text: extractedText, status: ocrStatus } = await extractTextAndDeleteImage(uploadedFilename);
+    const { text: extractedText, status: ocrStatus, confidence, error } = await extractTextAndDeleteImage(uploadedFilename);
+
+    // Log OCR results for debugging
+    if (ocrStatus === 'failed') {
+      console.warn(`⚠️  OCR extraction failed for prescription: ${error}`);
+    } else {
+      console.log(`✅ OCR extraction successful: ${extractedText.length} characters extracted`);
+    }
 
     const request = new PrescriptionRequest({
       patientName,
@@ -98,8 +153,21 @@ export const createPrescription = async (req, res) => {
     });
 
     await request.save();
-    res.status(201).json({ success: true, request, message: 'Prescription request submitted. Admin will review shortly.' });
+    
+    // Include extraction quality info in response
+    res.status(201).json({ 
+      success: true, 
+      request, 
+      message: 'Prescription request submitted. Admin will review shortly.',
+      ocrDetails: {
+        status: ocrStatus,
+        textLength: extractedText.length,
+        confidence: confidence || 'N/A',
+        qualityNote: extractedText.length === 0 ? '⚠️ No text extracted - please review manually' : '✅ Text extracted successfully'
+      }
+    });
   } catch (err) {
+    console.error('❌ Prescription submission error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };

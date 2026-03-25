@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getExpiryLossDetails, ExpiryLossItem } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -35,10 +34,10 @@ export default function ExpiryLossReport() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Expiry Loss Report</h1>
-          <p className="text-muted-foreground/70 font-medium">
+          <p className="text-sm text-muted-foreground mt-0.5">
             Detailed breakdown of all expired items and financial loss.
           </p>
           {data && (
@@ -47,28 +46,28 @@ export default function ExpiryLossReport() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-3 text-sm">
-          <div className="flex flex-col items-end">
-            <span className="text-muted-foreground">Total items expired</span>
-            <span className="text-lg font-semibold">{data ? data.summary.totalItems : '…'}</span>
+        <div className="flex items-center gap-3">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-sm text-right">
+            <div className="text-xs text-slate-300 font-medium">Total items expired</div>
+            <div className="text-xl font-bold">{data ? data.summary.totalItems : '…'}</div>
           </div>
-          <div className="flex flex-col items-end">
-            <span className="text-muted-foreground">Total expiry loss</span>
-            <span className="text-lg font-semibold">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-sm text-right">
+            <div className="text-xs text-red-100 font-medium">Total expiry loss</div>
+            <div className="text-xl font-bold">
               {data ? `₹${data.summary.totalLoss.toLocaleString()}` : '…'}
-            </span>
+            </div>
           </div>
         </div>
       </div>
 
-      <Card className="micro-interaction">
-        <CardHeader className="flex flex-row items-center justify-between">
+      <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-border/40 bg-slate-50/50 flex items-center justify-between">
           <div>
-            <CardTitle className="text-base">Expired Items</CardTitle>
-            <CardDescription>Each row represents a write-off entry from stock ledger.</CardDescription>
+            <h2 className="font-semibold text-foreground">Expired Items</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Each row represents a write-off entry from stock ledger.</p>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="p-6">
           {loading ? (
             <div className="h-72 flex items-center justify-center text-muted-foreground">Loading expiry loss…</div>
           ) : items.length === 0 ? (
@@ -80,46 +79,34 @@ export default function ExpiryLossReport() {
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>Showing last {items.length} expiry write-offs.</span>
               </div>
-              <div className="border rounded-lg overflow-hidden">
+              <div className="rounded-xl border border-border/50 overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Medicine</TableHead>
-                      <TableHead>Batch</TableHead>
-                      <TableHead>Expired Date</TableHead>
-                      <TableHead className="text-center">Qty</TableHead>
-                      <TableHead className="text-right">Purchase Price</TableHead>
-                      <TableHead className="text-right">Total Loss</TableHead>
-                      <TableHead>Supplier</TableHead>
-                      <TableHead>Purchase Date</TableHead>
-                      <TableHead>Action</TableHead>
+                    <TableRow className="bg-slate-50/80">
+                      {['Medicine', 'Batch', 'Expired Date', 'Qty', 'Purchase Price', 'Total Loss', 'Supplier', 'Purchase Date', 'Action'].map(h => (
+                        <TableHead key={h} className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{h}</TableHead>
+                      ))}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {items.map((item, idx) => (
-                      <TableRow key={`${item.medicineId}-${item.batchId}-${idx}`}>
+                      <TableRow key={`${item.medicineId}-${item.batchId}-${idx}`} className="hover:bg-slate-50/60">
                         <TableCell className="font-medium">{item.medicineName}</TableCell>
-                        <TableCell>{item.batchNumber}</TableCell>
-                        <TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{item.batchNumber}</TableCell>
+                        <TableCell className="text-sm">
                           {item.expiryDate ? format(new Date(item.expiryDate), 'dd MMM yyyy') : '-'}
                         </TableCell>
-                        <TableCell className="text-center">{item.quantityExpired}</TableCell>
-                        <TableCell className="text-right">
-                          ₹{(item.unitPrice || 0).toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
+                        <TableCell className="text-sm font-semibold">{item.quantityExpired}</TableCell>
+                        <TableCell className="text-sm">₹{(item.unitPrice || 0).toLocaleString()}</TableCell>
+                        <TableCell className="text-sm font-semibold text-red-600">
                           ₹{(item.totalLoss || 0).toLocaleString()}
                         </TableCell>
-                        <TableCell>
-                          {item.supplierName || 'Unknown'}
-                        </TableCell>
-                        <TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{item.supplierName || 'Unknown'}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
                           {item.purchaseDate ? format(new Date(item.purchaseDate), 'dd MMM yyyy') : '-'}
                         </TableCell>
                         <TableCell>
-                          <Button variant="outline" size="sm">
-                            View Details
-                          </Button>
+                          <Button variant="outline" size="sm">View Details</Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -128,8 +115,8 @@ export default function ExpiryLossReport() {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

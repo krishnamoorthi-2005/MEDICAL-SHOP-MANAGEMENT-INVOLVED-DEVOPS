@@ -2,12 +2,16 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Home, ShoppingCart, User, Bell, Clock, 
-    Package, Heart, Calendar, TrendingUp, Plus,
-    Pill, AlertCircle, CheckCircle2, FileText,
+    Package, Heart, Calendar, TrendingUp,
+    AlertCircle, CheckCircle2, FileText,
     Settings, LogOut, Menu, X, ChevronRight, Star
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getMyCustomerInfo, getMyPrescriptions, type PrescriptionRequest } from '@/lib/api';
+import {
+    getMyCustomerInfo,
+    getMyPrescriptions,
+    type PrescriptionRequest,
+} from '@/lib/api';
 
 interface Medicine {
     id: string;
@@ -27,21 +31,13 @@ interface Order {
     invoiceNumber?: string;
 }
 
-interface Reminder {
-    id: string;
-    medicineName: string;
-    time: string;
-    frequency: string;
-}
-
 export default function NewUserDashboard() {
     const navigate = useNavigate();
     const { toast } = useToast();
-    const [activeTab, setActiveTab] = useState<'home' | 'orders' | 'reminders' | 'profile'>('home');
+    const [activeTab, setActiveTab] = useState<'home' | 'orders' | 'profile'>('home');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [medicines, setMedicines] = useState<Medicine[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
-    const [reminders, setReminders] = useState<Reminder[]>([]);
     const [loading, setLoading] = useState(false);
     const [customerData, setCustomerData] = useState<any>(null);
     const [nextPurchaseDate, setNextPurchaseDate] = useState<string | null>(null);
@@ -52,6 +48,29 @@ export default function NewUserDashboard() {
     const userName = localStorage.getItem('userFullName') || 'User';
     const userEmail = localStorage.getItem('userEmail') || '';
     const userPhone = localStorage.getItem('userPhone') || '';
+
+    // Edit Profile State
+    const [showEditProfile, setShowEditProfile] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        fullName: userName,
+        phone: userPhone || '',
+        address: localStorage.getItem('userAddress') || '',
+    });
+
+    const handleUpdateProfile = () => {
+        if (!editFormData.fullName.trim()) {
+            toast({ title: 'Error', description: 'Full name is required!' });
+            return;
+        }
+        
+        localStorage.setItem('userFullName', editFormData.fullName);
+        if (editFormData.phone) localStorage.setItem('userPhone', editFormData.phone);
+        if (editFormData.address) localStorage.setItem('userAddress', editFormData.address);
+        
+        setShowEditProfile(false);
+        toast({ title: 'Success! ✓', description: 'Profile updated successfully!' });
+        window.location.reload();
+    };
 
     useEffect(() => {
         loadDashboardData();
@@ -70,8 +89,11 @@ export default function NewUserDashboard() {
     const loadDashboardData = async () => {
         setLoading(true);
         try {
+            const customerEmail = userEmail || undefined;
+            const customerPhone = userPhone || undefined;
+
             // Load customer data from API
-            const response = await getMyCustomerInfo(userEmail);
+            const response = await getMyCustomerInfo(customerEmail, customerPhone);
             
             if (response.success && response.customer) {
                 setCustomerData(response.customer);
@@ -123,9 +145,6 @@ export default function NewUserDashboard() {
                     setPrescriptions([]);
                 }
             }
-            
-            // Keep mock reminders for now (future feature)
-            setReminders([]);
         } catch (error: any) {
             console.error('Failed to load dashboard data:', error);
             setHasCustomerRecord(false);
@@ -147,15 +166,30 @@ export default function NewUserDashboard() {
     };
 
     const loadPrescriptions = async (phoneOrEmail: string) => {
-        if (!phoneOrEmail) {
-            setPrescriptions([]);
-            return;
-        }
-        
         setPrescriptionsLoading(true);
         try {
-            const result = await getMyPrescriptions(phoneOrEmail);
-            setPrescriptions(result || []);
+            const candidates = [
+                phoneOrEmail,
+                userEmail,
+                userPhone,
+                localStorage.getItem('lastPrescriptionEmail') || '',
+                localStorage.getItem('lastPrescriptionPhone') || '',
+            ].filter(Boolean);
+
+            const seen = new Set<string>();
+            const merged: PrescriptionRequest[] = [];
+
+            for (const candidate of candidates) {
+                const result = await getMyPrescriptions(candidate);
+                for (const item of result || []) {
+                    if (!seen.has(item._id)) {
+                        seen.add(item._id);
+                        merged.push(item);
+                    }
+                }
+            }
+
+            setPrescriptions(merged);
         } catch (error: any) {
             console.error('Failed to load prescriptions:', error);
             setPrescriptions([]);
@@ -178,24 +212,23 @@ export default function NewUserDashboard() {
 
     // Home Tab Content
     const renderHomeTab = () => (
-        <div className="space-y-6">
+        <div className="space-y-5">
             {/* Welcome Card */}
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
-                <p className="text-blue-100 mb-2 font-medium">{getGreeting()},</p>
-                <h2 className="text-3xl font-bold mb-2">{userName}</h2>
-                <p className="text-blue-100">Here's your health summary today</p>
-                <div className="mt-6 grid grid-cols-2 gap-4">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                        <p className="text-blue-100 text-sm mb-1">Next Purchase</p>
-                        <p className="text-2xl font-bold">
-                            {hasCustomerRecord ? (nextPurchaseDate || 'Not set') : 'Visit store'}
-                        </p>
-                    </div>
-                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                        <p className="text-blue-100 text-sm mb-1">Total Spent</p>
-                        <p className="text-2xl font-bold">
-                            {hasCustomerRecord ? `₹${customerData?.totalSpent?.toFixed(0) || 0}` : '₹0'}
-                        </p>
+            <div className="relative overflow-hidden rounded-3xl p-6 text-white"
+                style={{ background: 'linear-gradient(135deg,#0f0c29 0%,#1a1040 55%,#0d1a30 100%)', boxShadow: '0 8px 32px rgba(99,102,241,0.2)' }}>
+                <div className="absolute top-0 right-0 h-40 w-40 rounded-full blur-3xl opacity-20 pointer-events-none"
+                    style={{ background: 'radial-gradient(circle,#6366f1,transparent)' }} />
+                <div className="relative z-10">
+                    <p className="text-xs font-bold mb-1" style={{ color: '#a5b4fc' }}>{getGreeting()},</p>
+                    <h2 className="text-2xl font-extrabold mb-1 tracking-tight">{userName}</h2>
+                    <p className="text-sm mb-5" style={{ color: '#94a3b8' }}>Here's your health summary today</p>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(165,180,252,0.15)' }}>
+                            <p className="text-xs font-medium mb-1" style={{ color: '#94a3b8' }}>Next Purchase</p>
+                            <p className="text-lg font-extrabold text-white">
+                                {hasCustomerRecord ? (nextPurchaseDate || 'Not set') : 'Visit store'}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -412,48 +445,6 @@ export default function NewUserDashboard() {
                 )}
             </div>
 
-            {/* Medicine Reminders */}
-            <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <Bell className="h-5 w-5 text-purple-600" />
-                        Medicine Reminders
-                    </h3>
-                    <button
-                        onClick={() => setActiveTab('reminders')}
-                        className="text-sm font-medium text-purple-600 hover:text-purple-700 flex items-center gap-1"
-                    >
-                        Manage <ChevronRight className="h-4 w-4" />
-                    </button>
-                </div>
-                {reminders.length === 0 ? (
-                    <div className="text-center py-8">
-                        <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500 text-sm">No reminders set</p>
-                        <button
-                            onClick={() => setActiveTab('reminders')}
-                            className="mt-4 px-6 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                            Add Reminder
-                        </button>
-                    </div>
-                ) : (
-                    <div className="space-y-3">
-                        {reminders.map(reminder => (
-                            <div key={reminder.id} className="flex items-center gap-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
-                                <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                                    <Pill className="h-5 w-5 text-purple-600" />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-semibold text-gray-900">{reminder.medicineName}</p>
-                                    <p className="text-sm text-gray-600">{reminder.time} • {reminder.frequency}</p>
-                                </div>
-                                <Clock className="h-5 w-5 text-purple-400" />
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
         </div>
     );
 
@@ -526,98 +517,6 @@ export default function NewUserDashboard() {
         </div>
     );
 
-    // Reminders Tab Content
-    const renderRemindersTab = () => (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Medicine Reminders</h2>
-                    <p className="text-gray-600">Never miss your medication</p>
-                </div>
-                <button
-                    onClick={() => toast({ title: 'Coming Soon', description: 'Reminder feature will be available soon!' })}
-                    className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                    <Plus className="h-5 w-5" />
-                    Add Reminder
-                </button>
-            </div>
-
-            {reminders.length === 0 ? (
-                <div className="space-y-6">
-                    <div className="bg-white rounded-xl p-12 text-center border border-gray-100">
-                        <Bell className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">No Reminders Set</h3>
-                        <p className="text-gray-600 mb-6">Set up reminders to take your medicines on time</p>
-                        <button
-                            onClick={() => toast({ title: 'Coming Soon', description: 'Reminder feature will be available soon!' })}
-                            className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                            Create First Reminder
-                        </button>
-                    </div>
-                    
-                    <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-8 text-center">
-                        <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-purple-100 mb-4">
-                            <Bell className="h-8 w-8 text-purple-600" />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-3">Automated Reminders Coming Soon!</h3>
-                        <p className="text-gray-700 mb-4 max-w-md mx-auto">
-                            Smart medication reminders with notifications, dose tracking, and refill alerts to help you stay on schedule.
-                        </p>
-                        <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 max-w-md mx-auto">
-                            <p className="text-sm font-semibold text-gray-900 mb-2">Upcoming Features:</p>
-                            <ul className="text-sm text-gray-700 space-y-1 text-left">
-                                <li className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4 text-purple-600" />
-                                    Daily medication reminders
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Bell className="h-4 w-4 text-purple-600" />
-                                    SMS & push notifications
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Calendar className="h-4 w-4 text-purple-600" />
-                                    Refill reminders
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                <div className="grid gap-4">
-                    {reminders.map(reminder => (
-                        <div key={reminder.id} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                            <div className="flex items-start justify-between">
-                                <div className="flex items-start gap-4">
-                                    <div className="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                                        <Pill className="h-6 w-6 text-purple-600" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold text-gray-900 mb-1">{reminder.medicineName}</h3>
-                                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                                            <span className="flex items-center gap-1">
-                                                <Clock className="h-4 w-4" />
-                                                {reminder.time}
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <Calendar className="h-4 w-4" />
-                                                {reminder.frequency}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button className="text-gray-400 hover:text-red-600 transition-colors">
-                                    <X className="h-5 w-5" />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-
     // Profile Tab Content
     const renderProfileTab = () => (
         <div className="space-y-6">
@@ -664,18 +563,7 @@ export default function NewUserDashboard() {
 
             {/* Stats Overview */}
             {hasCustomerRecord && customerData && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200 shadow-sm">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="h-12 w-12 rounded-xl bg-blue-500 flex items-center justify-center shadow-lg">
-                                <ShoppingCart className="h-6 w-6 text-white" />
-                            </div>
-                            <TrendingUp className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <p className="text-sm font-semibold text-blue-700 mb-1">Total Spent</p>
-                        <p className="text-3xl font-black text-blue-900">₹{customerData.totalSpent || 0}</p>
-                    </div>
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-200 shadow-sm">
                         <div className="flex items-center justify-between mb-3">
                             <div className="h-12 w-12 rounded-xl bg-purple-500 flex items-center justify-center shadow-lg">
@@ -765,10 +653,10 @@ export default function NewUserDashboard() {
             </div>
 
             {/* Quick Actions Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                 {/* Edit Profile Card */}
                 <button
-                    onClick={() => toast({ title: 'Coming Soon', description: 'Edit profile feature will be available soon!' })}
+                    onClick={() => setShowEditProfile(true)}
                     className="group bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 rounded-2xl p-6 text-white text-left shadow-xl hover:shadow-2xl transition-all transform hover:scale-105"
                 >
                     <div className="flex items-center justify-between mb-4">
@@ -779,21 +667,6 @@ export default function NewUserDashboard() {
                     </div>
                     <h3 className="text-xl font-black mb-2">Edit Profile</h3>
                     <p className="text-blue-100 text-sm font-medium">Update your personal information</p>
-                </button>
-
-                {/* Security Card */}
-                <button
-                    onClick={() => toast({ title: 'Coming Soon', description: 'Security settings will be available soon!' })}
-                    className="group bg-gradient-to-br from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 rounded-2xl p-6 text-white text-left shadow-xl hover:shadow-2xl transition-all transform hover:scale-105"
-                >
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="h-14 w-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 group-hover:scale-110 transition-transform">
-                            <Settings className="h-7 w-7" />
-                        </div>
-                        <ChevronRight className="h-6 w-6 opacity-60 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                    <h3 className="text-xl font-black mb-2">Security</h3>
-                    <p className="text-purple-100 text-sm font-medium">Change password & 2FA settings</p>
                 </button>
             </div>
 
@@ -846,16 +719,15 @@ export default function NewUserDashboard() {
                         </div>
 
                         {/* Desktop Navigation */}
-                        <nav className="hidden md:flex items-center gap-1">
+                        <div className="hidden md:flex items-center gap-1">
                             {[
                                 { id: 'home', label: 'Home', icon: Home },
                                 { id: 'orders', label: 'Orders', icon: ShoppingCart },
-                                { id: 'reminders', label: 'Reminders', icon: Bell },
                                 { id: 'profile', label: 'Profile', icon: User },
                             ].map(tab => (
                                 <button
                                     key={tab.id}
-                                    onClick={() => setActiveTab(tab.id as any)}
+                                    onClick={() => setActiveTab(tab.id as 'home' | 'orders' | 'profile')}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
                                         activeTab === tab.id
                                             ? 'bg-blue-600 text-white shadow-md'
@@ -866,7 +738,7 @@ export default function NewUserDashboard() {
                                     <span>{tab.label}</span>
                                 </button>
                             ))}
-                        </nav>
+                        </div>
 
                         {/* User Menu */}
                         <button
@@ -898,13 +770,12 @@ export default function NewUserDashboard() {
                             {[
                                 { id: 'home', label: 'Home', icon: Home },
                                 { id: 'orders', label: 'Orders', icon: ShoppingCart },
-                                { id: 'reminders', label: 'Reminders', icon: Bell },
                                 { id: 'profile', label: 'Profile', icon: User },
                             ].map(tab => (
                                 <button
                                     key={tab.id}
                                     onClick={() => {
-                                        setActiveTab(tab.id as any);
+                                        setActiveTab(tab.id as 'home' | 'orders' | 'profile');
                                         setSidebarOpen(false);
                                     }}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
@@ -926,9 +797,71 @@ export default function NewUserDashboard() {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {activeTab === 'home' && renderHomeTab()}
                 {activeTab === 'orders' && renderOrdersTab()}
-                {activeTab === 'reminders' && renderRemindersTab()}
                 {activeTab === 'profile' && renderProfileTab()}
             </main>
+
+            {/* Edit Profile Modal */}
+            {showEditProfile && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+                        <h2 className="text-2xl font-black text-gray-900 mb-6">Edit Profile</h2>
+                        
+                        <div className="space-y-5">
+                            {/* Full Name */}
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Full Name *</label>
+                                <input
+                                    type="text"
+                                    value={editFormData.fullName}
+                                    onChange={(e) => setEditFormData({ ...editFormData, fullName: e.target.value })}
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                    placeholder="Your full name"
+                                />
+                            </div>
+
+                            {/* Phone */}
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
+                                <input
+                                    type="tel"
+                                    value={editFormData.phone}
+                                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                    placeholder="Your phone number"
+                                />
+                            </div>
+
+                            {/* Address */}
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Address</label>
+                                <textarea
+                                    value={editFormData.address}
+                                    onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                    placeholder="Your address"
+                                    rows={3}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-3 mt-8">
+                            <button
+                                onClick={() => setShowEditProfile(false)}
+                                className="flex-1 px-4 py-3 border-2 border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleUpdateProfile}
+                                className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg"
+                            >
+                                Save Changes ✓
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Mobile Bottom Navigation */}
             <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-30">
@@ -936,12 +869,11 @@ export default function NewUserDashboard() {
                     {[
                         { id: 'home', label: 'Home', icon: Home },
                         { id: 'orders', label: 'Orders', icon: ShoppingCart },
-                        { id: 'reminders', label: 'Reminders', icon: Bell },
                         { id: 'profile', label: 'Profile', icon: User },
                     ].map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as any)}
+                            onClick={() => setActiveTab(tab.id as 'home' | 'orders' | 'profile')}
                             className={`flex flex-col items-center justify-center gap-1 ${
                                 activeTab === tab.id ? 'text-blue-600' : 'text-gray-600'
                             }`}

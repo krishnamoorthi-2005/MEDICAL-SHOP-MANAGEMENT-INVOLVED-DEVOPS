@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Minus, Trash2, CreditCard, Banknote, Smartphone, X, User, Star } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, CreditCard, Banknote, Smartphone, X, User, Star, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +18,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { createSale, searchMedicines as apiSearchMedicines, getFrequentItems, searchActiveCustomers, getCustomers, updateCustomer, createCustomer, type Customer } from '@/lib/api';
+import { createSale, searchMedicines as apiSearchMedicines, getFrequentItems, searchActiveCustomers, getCustomers, getUsers, updateCustomer, createCustomer, type Customer } from '@/lib/api';
 
 interface Medicine {
   _id: string;
@@ -51,6 +51,7 @@ export default function Billing() {
   const [customerSearchResults, setCustomerSearchResults] = useState<Customer[]>([]);
   const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
   const [nextPurchaseDate, setNextPurchaseDate] = useState('');
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
 
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -59,7 +60,7 @@ export default function Billing() {
   const [frequentItems, setFrequentItems] = useState<Medicine[]>([]);
   const [isLoadingFrequent, setIsLoadingFrequent] = useState(true);
 
-  const [regularCustomers, setRegularCustomers] = useState<Customer[]>([]);
+  const [regularCustomers, setRegularCustomers] = useState<(Customer & { isAppUser?: boolean })[]>([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
 
   // Load all active regular customers when tab becomes 'regular'
@@ -68,17 +69,51 @@ export default function Billing() {
       const loadCustomers = async () => {
         setIsLoadingCustomers(true);
         try {
-          const result = await getCustomers({ active: true, limit: 100 });
-          const list = Array.isArray(result) ? result : (result.data || result.customers || []);
+          const [custResult, usersResult] = await Promise.all([
+            getCustomers({ active: true, limit: 100 }),
+            getUsers(),
+          ]);
 
-          const validCustomers = list.filter((customer: any) => {
-            if (!customer._id || !customer.name || !customer.phone) return false;
-            if (customer.isAppUser === true) return false;
-            if (customer.role !== undefined) return false;
-            return true;
+          const custList: Customer[] = Array.isArray(custResult)
+            ? custResult
+            : (custResult.data || custResult.customers || []);
+
+          const allUsers = usersResult || [];
+          const customerUsers = allUsers.filter(
+            (u: any) => u.role?.toLowerCase() === 'user' || u.role?.toLowerCase() === 'patient'
+          );
+
+          // Start with real Customer records
+          const merged: (Customer & { isAppUser?: boolean })[] = custList.map(c => {
+            const customerRecord = c as Customer & { isAppUser?: boolean };
+            const isAppUser = customerUsers.some(
+              (u: any) => u.email && customerRecord.email && u.email.toLowerCase() === customerRecord.email.toLowerCase()
+            );
+            return { ...customerRecord, isAppUser };
           });
 
-          setRegularCustomers(validCustomers);
+          // Add app-only users who have no Customer record yet
+          customerUsers.forEach((u: any) => {
+            const exists = merged.some(
+              c => c.email && u.email && c.email.toLowerCase() === u.email.toLowerCase()
+            );
+            if (!exists) {
+              merged.push({
+                _id: u.id,
+                name: u.name,
+                email: u.email,
+                phone: u.phone || '',
+                isActive: u.status === 'active',
+                totalSpent: 0,
+                totalVisits: 0,
+                isAppUser: true,
+                createdAt: u.createdAt,
+                updatedAt: u.createdAt,
+              } as any);
+            }
+          });
+
+          setRegularCustomers(merged.filter(c => c._id && c.name));
         } catch (error) {
           console.error('Customer load failed:', error);
         } finally {
@@ -147,16 +182,9 @@ export default function Billing() {
 
         const searchLower = customerSearchQuery.toLowerCase().trim();
 
-        // Filter: ONLY actual customers from Customer collection
-        // The backend already filters for isActive: true, but we do additional validation
+        // Filter: only require basic required fields
         const validCustomers = list.filter((customer: any) => {
-          // Ensure it has Customer model required fields
-          if (!customer._id || !customer.name || !customer.phone) return false;
-
-          // Exclude if it has User model indicators
-          if (customer.isAppUser === true) return false;
-          if (customer.role !== undefined) return false;
-
+          if (!customer._id || !customer.name) return false;
           return true;
         });
 
@@ -256,12 +284,30 @@ export default function Billing() {
     setSelectedCustomer(null);
     setCustomerSearchQuery('');
     setNextPurchaseDate('');
+    setPaymentMethod('cash');
   };
 
   const processPayment = async () => {
     if (cart.length === 0) {
       toast({ title: 'Empty Cart', description: 'Add items to cart before checkout', variant: 'destructive' });
       return;
+    }
+
+    // Validate cart items
+    for (let i = 0; i < cart.length; i++) {
+      const item = cart[i];
+      if (!item.medicine?._id) {
+        toast({ title: 'Invalid Cart', description: `Item ${i}: Missing medicine ID`, variant: 'destructive' });
+        return;
+      }
+      if (!item.medicine?.name) {
+        toast({ title: 'Invalid Cart', description: `Item ${i}: Missing medicine name`, variant: 'destructive' });
+        return;
+      }
+      if (!item.quantity || item.quantity <= 0) {
+        toast({ title: 'Invalid Cart', description: `Item ${i}: Invalid quantity`, variant: 'destructive' });
+        return;
+      }
     }
 
     if (customerMode === 'regular' && !selectedCustomer) {
@@ -281,26 +327,47 @@ export default function Billing() {
       // 1. If regular customer, ensure we have a valid Customer _id (resolve AppUsers)
       if (customerMode === 'regular' && selectedCustomer) {
         if ((selectedCustomer as any).isAppUser) {
-          const existingSearch = await getCustomers({ search: selectedCustomer.email });
+          const searchTerm = selectedCustomer.email || selectedCustomer.phone;
+          const existingSearch = searchTerm ? await getCustomers({ search: searchTerm }) : { data: [], customers: [] };
           const list = Array.isArray(existingSearch) ? existingSearch : (existingSearch.data || []);
-          const match = list.find((c: any) => c.email === selectedCustomer.email);
+          const match = list.find((c: any) => (
+            (selectedCustomer.email && c.email && c.email.toLowerCase() === selectedCustomer.email.toLowerCase()) ||
+            (selectedCustomer.phone && c.phone === selectedCustomer.phone)
+          ));
 
           if (match) {
             finalCustomerId = match._id;
             currentSpent = match.totalSpent || 0;
             currentVisits = match.totalVisits || 0;
           } else {
-            const dummyPhone = `999${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
-            const newCustRes = await createCustomer({
-              name: selectedCustomer.name,
-              phone: selectedCustomer.phone !== 'N/A' ? selectedCustomer.phone : dummyPhone,
-              email: selectedCustomer.email,
-            });
-            const newCust = newCustRes.data || newCustRes;
-            if (newCust && newCust._id) {
-              finalCustomerId = newCust._id;
-              currentSpent = 0;
-              currentVisits = 0;
+            const customerPhone = selectedCustomer.phone && selectedCustomer.phone !== 'N/A'
+              ? selectedCustomer.phone
+              : `999${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
+
+            try {
+              const newCustRes = await createCustomer({
+                name: selectedCustomer.name,
+                phone: customerPhone,
+                email: selectedCustomer.email,
+              });
+              const newCust = newCustRes.data || newCustRes.customer || newCustRes;
+              if (newCust && newCust._id) {
+                finalCustomerId = newCust._id;
+                currentSpent = newCust.totalSpent || 0;
+                currentVisits = newCust.totalVisits || 0;
+              }
+            } catch (createErr: any) {
+              // If the phone already exists, reuse the existing customer instead of failing checkout.
+              const fallbackSearch = await getCustomers({ search: customerPhone });
+              const fallbackList = Array.isArray(fallbackSearch) ? fallbackSearch : (fallbackSearch.data || fallbackSearch.customers || []);
+              const existing = fallbackList.find((c: any) => c.phone === customerPhone);
+              if (existing) {
+                finalCustomerId = existing._id;
+                currentSpent = existing.totalSpent || 0;
+                currentVisits = existing.totalVisits || 0;
+              } else {
+                throw createErr;
+              }
             }
           }
         } else {
@@ -318,12 +385,22 @@ export default function Billing() {
         customerName: finalCustomerName,
         customerId: finalCustomerId,
         paymentMethod,
-        taxAmount: tax,
+        taxAmount: typeof tax === 'number' && !isNaN(tax) ? Math.max(0, tax) : 0,
         discountAmount: 0
       };
 
+      console.log('💳 Sending sale data:', {
+        itemsCount: saleData.items.length,
+        paymentMethod: saleData.paymentMethod,
+        taxAmount: saleData.taxAmount,
+        subtotal,
+        total
+      });
+
       // 3. Call backend API
       const result = await createSale(saleData);
+
+      console.log('✅ Sale created successfully:', result);
 
       // 4. Update customer metrics
       if (finalCustomerId) {
@@ -351,6 +428,8 @@ export default function Billing() {
       window.dispatchEvent(new CustomEvent('sale-completed'));
 
     } catch (error: any) {
+      console.error('❌ Payment error:', error);
+      console.error('Error message:', error.message);
       toast({
         title: '❌ Payment Failed',
         description: error.message || 'Failed to process payment',
@@ -414,13 +493,13 @@ export default function Billing() {
           </div>
 
           {isLoadingFrequent ? (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="h-16 bg-muted/40 rounded-lg animate-pulse" />
               ))}
             </div>
           ) : frequentItems.length > 0 ? (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {frequentItems.map((medicine) => (
                 <button
                   key={medicine._id}
@@ -525,24 +604,24 @@ export default function Billing() {
       </div>
 
       {/* Right: Bill Summary */}
-      <Card className="w-full md:w-80 flex flex-col h-fit md:h-auto border border-border/60 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-bold">Bill Summary</CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
-          <div className="space-y-3.5 flex-1">
+      <div className="w-full md:w-80 flex flex-col h-fit md:h-auto rounded-2xl bg-white border border-border/60 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-border/40 bg-slate-50/50">
+          <h2 className="font-semibold text-foreground">Bill Summary</h2>
+        </div>
+        <div className="p-5 flex-1 flex flex-col">
+          <div className="space-y-3 flex-1">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground/70 font-medium">Items ({cart.length})</span>
+              <span className="text-muted-foreground font-medium">Items ({cart.length})</span>
               <span className="font-semibold">₹{subtotal.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground/70 font-medium">GST (5%)</span>
+              <span className="text-muted-foreground font-medium">GST (5%)</span>
               <span className="font-semibold">₹{tax.toLocaleString()}</span>
             </div>
-            <Separator />
+            <div className="h-px bg-border/50" />
             <div className="flex justify-between text-lg font-bold">
               <span>Total</span>
-              <span>₹{total.toLocaleString()}</span>
+              <span className="text-indigo-600">₹{total.toLocaleString()}</span>
             </div>
           </div>
 
@@ -568,155 +647,273 @@ export default function Billing() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="regular" className="mt-3 space-y-0">
-                {/* Compact Container with Fixed Height */}
-                <div className="border border-border/60 rounded-lg bg-background overflow-hidden h-[320px] flex flex-col">
-                  {selectedCustomer ? (
-                    <>
-                      {/* Selected Customer - Compact Header */}
-                      <div className="flex items-center justify-between px-3 py-2 bg-primary/5 border-b border-border/60 shrink-0">
-                        <div className="flex flex-col flex-1 min-w-0 pr-2">
-                          <span className="text-sm font-semibold truncate">{selectedCustomer.name}</span>
-                          <span className="text-[10px] text-muted-foreground truncate">
-                            {selectedCustomer.phone}
-                          </span>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-6 w-6 shrink-0" 
-                          onClick={() => { 
-                            setSelectedCustomer(null); 
-                            setCustomerSearchQuery(''); 
-                            setNextPurchaseDate(''); 
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-
-                      {/* Next Purchase Date - Mini Tabs */}
-                      <div className="p-3 space-y-2 flex-1 overflow-y-auto">
-                        <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                          Next Purchase (Optional)
-                        </div>
-                        
-                        {/* Compact Date Preset Buttons */}
-                        <div className="flex gap-1.5">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 h-7 text-[10px] px-2"
-                            onClick={() => {
-                              const tomorrow = new Date();
-                              tomorrow.setDate(tomorrow.getDate() + 1);
-                              setNextPurchaseDate(tomorrow.toISOString().split('T')[0]);
-                            }}
-                          >
-                            +1d
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 h-7 text-[10px] px-2"
-                            onClick={() => {
-                              const nextWeek = new Date();
-                              nextWeek.setDate(nextWeek.getDate() + 7);
-                              setNextPurchaseDate(nextWeek.toISOString().split('T')[0]);
-                            }}
-                          >
-                            +7d
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 h-7 text-[10px] px-2"
-                            onClick={() => {
-                              const nextMonth = new Date();
-                              nextMonth.setDate(nextMonth.getDate() + 30);
-                              setNextPurchaseDate(nextMonth.toISOString().split('T')[0]);
-                            }}
-                          >
-                            +30d
-                          </Button>
-                        </div>
-                        
-                        {/* Compact Date Input */}
-                        <Input
-                          type="date"
-                          value={nextPurchaseDate}
-                          min={new Date().toISOString().split('T')[0]}
-                          onChange={(e) => setNextPurchaseDate(e.target.value)}
-                          className="h-8 text-xs"
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      {/* Customer List Header - Compact */}
-                      <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-b border-border/60 shrink-0">
-                        <span className="text-[10px] font-semibold uppercase tracking-wide">Select Customer</span>
-                        <span className="text-[9px] text-muted-foreground font-medium px-1.5 py-0.5 bg-background rounded">
-                          {regularCustomers.length}
-                        </span>
-                      </div>
+              <TabsContent value="regular" className="mt-4 space-y-3">
+                {selectedCustomer ? (
+                  /* ── SELECTED CUSTOMER VIEW ── */
+                  <div className="space-y-3">
+                    {/* Selected Customer Card - Large & Prominent */}
+                    <div className="relative rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200/60 shadow-sm overflow-hidden p-5">
+                      {/* Background Accent */}
+                      <div className="absolute top-0 right-0 h-32 w-32 rounded-full blur-3xl opacity-20" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }} />
                       
-                      {/* Customer List - Scrollable */}
-                      <div className="flex-1 overflow-y-auto">
-                        {isLoadingCustomers ? (
-                          <div className="flex items-center justify-center h-full">
-                            <span className="text-xs text-muted-foreground">Loading...</span>
+                      <div className="relative z-10 space-y-3">
+                        {/* Header with Clear Button */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <h3 className="text-xl font-bold text-foreground">{selectedCustomer.name}</h3>
+                            <p className="text-sm text-muted-foreground/70 mt-0.5">{selectedCustomer.phone}</p>
                           </div>
-                        ) : regularCustomers.length > 0 ? (
-                          <div className="divide-y divide-border/30">
-                            {regularCustomers.map(c => (
-                              <button
-                                key={c._id}
-                                onClick={() => setSelectedCustomer(c)}
-                                className="w-full px-3 py-2 hover:bg-muted/50 transition-colors text-left group"
-                              >
-                                <div className="flex items-center justify-between gap-2">
-                                  <div className="flex flex-col flex-1 min-w-0">
-                                    <span className="text-xs font-semibold truncate group-hover:text-primary">
-                                      {c.name}
-                                    </span>
-                                    <span className="text-[10px] text-muted-foreground truncate">
-                                      {c.phone}
-                                    </span>
-                                  </div>
-                                  <div className="flex flex-col items-end shrink-0">
-                                    <span className="text-[10px] font-semibold">₹{c.totalSpent?.toFixed(0) || 0}</span>
-                                    <span className="text-[9px] text-muted-foreground">{c.totalVisits || 0}×</span>
-                                  </div>
-                                </div>
-                              </button>
-                            ))}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="shrink-0 hover:bg-red-50 hover:text-red-600"
+                            onClick={() => {
+                              setSelectedCustomer(null);
+                              setCustomerSearchQuery('');
+                              setNextPurchaseDate('');
+                              setShowCustomerResults(false);
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        {/* Customer Stats */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-white/70 rounded-lg p-3 border border-border/30">
+                            <div className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wide mb-1">Total Spent</div>
+                            <div className="text-2xl font-bold" style={{ color: '#6366f1' }}>₹{selectedCustomer.totalSpent?.toLocaleString() || '0'}</div>
                           </div>
-                        ) : (
-                          <div className="flex items-center justify-center h-full">
-                            <span className="text-xs text-muted-foreground">No customers</span>
+                          <div className="bg-white/70 rounded-lg p-3 border border-border/30">
+                            <div className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wide mb-1">Visits</div>
+                            <div className="text-2xl font-bold text-emerald-600">{selectedCustomer.totalVisits || 0}×</div>
                           </div>
-                        )}
+                        </div>
+
+                        {/* Next Purchase Date Section */}
+                        <div className="space-y-2 pt-2 border-t border-indigo-200/40">
+                          <label className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wide">Next Purchase (Optional)</label>
+                          
+                          {/* Quick Date Buttons */}
+                          <div className="grid grid-cols-3 gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-9 text-xs font-semibold"
+                              onClick={() => {
+                                const tomorrow = new Date();
+                                tomorrow.setDate(tomorrow.getDate() + 1);
+                                setNextPurchaseDate(tomorrow.toISOString().split('T')[0]);
+                              }}
+                            >
+                              Tomorrow
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-9 text-xs font-semibold"
+                              onClick={() => {
+                                const nextWeek = new Date();
+                                nextWeek.setDate(nextWeek.getDate() + 7);
+                                setNextPurchaseDate(nextWeek.toISOString().split('T')[0]);
+                              }}
+                            >
+                              Next Week
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-9 text-xs font-semibold"
+                              onClick={() => {
+                                const nextMonth = new Date();
+                                nextMonth.setDate(nextMonth.getDate() + 30);
+                                setNextPurchaseDate(nextMonth.toISOString().split('T')[0]);
+                              }}
+                            >
+                              Next Month
+                            </Button>
+                          </div>
+
+                          {/* Custom Date Input */}
+                          <Input
+                            type="date"
+                            value={nextPurchaseDate}
+                            min={new Date().toISOString().split('T')[0]}
+                            onChange={(e) => setNextPurchaseDate(e.target.value)}
+                            className="h-9 text-sm border-indigo-200/60"
+                          />
+                        </div>
                       </div>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* ── OPEN CUSTOMER SELECTION MODAL ── */
+                  <div className="space-y-3">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setCustomerSearchQuery('');
+                        setShowCustomerModal(true);
+                      }}
+                      className="w-full h-14 text-base font-semibold transition-all duration-150"
+                      style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 4px 12px rgba(99,102,241,0.25)' }}
+                    >
+                      <User className="h-5 w-5 mr-2" />
+                      Select Regular Customer
+                    </Button>
+                    <p className="text-center text-sm text-muted-foreground/70 pt-2">
+                      Click above to choose from {regularCustomers.length} regular customer{regularCustomers.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
 
             <Button
-              className="w-full h-12 text-lg font-semibold transition-all duration-140 mt-4"
+              className="w-full h-12 text-base font-bold transition-all duration-140 mt-4 text-white"
+              style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', boxShadow: '0 4px 16px rgba(99,102,241,0.3)' }}
               disabled={cart.length === 0 || (customerMode === 'regular' && !selectedCustomer)}
               onClick={() => setShowPaymentModal(true)}
             >
               Proceed to Payment
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* ═════════════════════════════════════════════════════════════ */}
+      {/* CUSTOMER SELECTION MODAL - Glass Effect Border Only */}
+      {/* ═════════════════════════════════════════════════════════════ */}
+      <Dialog open={showCustomerModal} onOpenChange={setShowCustomerModal}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col border-0 shadow-2xl bg-white" style={{
+          borderRadius: '20px',
+          boxShadow: '0 8px 32px rgba(99, 102, 241, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.7)'
+        }}>
+          <DialogHeader className="pb-4 border-b border-gray-100">
+            <DialogTitle className="text-2xl font-bold flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                <User className="h-6 w-6 text-white" />
+              </div>
+              Select Customer
+            </DialogTitle>
+            <DialogDescription className="text-base text-muted-foreground/70 mt-2">
+              Choose from <span className="font-semibold text-foreground">{regularCustomers.length}</span> regular customer{regularCustomers.length !== 1 ? 's' : ''}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Search Box Inside Modal */}
+          <div className="relative px-4 pt-4">
+            <Search className="absolute left-5 top-8 h-5 w-5 text-indigo-500/60" />
+            <Input
+              autoFocus
+              placeholder="Search by name or phone..."
+              value={customerSearchQuery}
+              onChange={(e) => {
+                setCustomerSearchQuery(e.target.value);
+                // Filter customers by search query
+                if (e.target.value.length > 0) {
+                  const filtered = regularCustomers.filter(c =>
+                    c.name?.toLowerCase().includes(e.target.value.toLowerCase()) ||
+                    c.phone?.includes(e.target.value)
+                  );
+                  setCustomerSearchResults(filtered);
+                } else {
+                  setCustomerSearchResults([]);
+                }
+              }}
+              className="pl-12 h-12 text-base rounded-xl border-gray-200"
+            />
+          </div>
+
+          {/* Customer List */}
+          <div className="flex-1 overflow-y-auto rounded-xl mt-4 p-2 bg-gray-50 border border-gray-150">
+            {isLoadingCustomers ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="text-center space-y-3">
+                  <div className="inline-block h-6 w-6 border-3 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin" />
+                  <p className="text-base text-muted-foreground/70 font-medium">Loading customers...</p>
+                </div>
+              </div>
+            ) : (customerSearchQuery ? customerSearchResults : regularCustomers).length > 0 ? (
+              <div className="space-y-2">
+                {(customerSearchQuery ? customerSearchResults : regularCustomers).map((c, idx) => (
+                  <button
+                    key={c._id || idx}
+                    onClick={() => {
+                      setSelectedCustomer(c);
+                      setShowCustomerModal(false);
+                      setCustomerSearchQuery('');
+                    }}
+                    className="w-full rounded-lg px-5 py-4 transition-all duration-200 text-left group border-0 bg-white hover:bg-indigo-50 border border-gray-100"
+                  >
+                    <div className="space-y-3">
+                      {/* Customer Name & Phone */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-lg font-bold text-foreground group-hover:text-indigo-600 transition-colors truncate">
+                            {c.name}
+                          </div>
+                          <div className="text-base text-muted-foreground/70 mt-1 truncate">
+                            {c.phone || 'No phone'}
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <ChevronRight className="h-5 w-5 text-white" />
+                        </div>
+                      </div>
+
+                      {/* Stats Row */}
+                      <div className="grid grid-cols-3 gap-3 pt-2">
+                        <div className="px-3 py-2.5 bg-blue-50 text-blue-700 rounded-lg font-semibold text-center">
+                          <div className="text-xs text-blue-600/70 mb-1">Spent</div>
+                          <div className="text-lg font-bold">₹{c.totalSpent?.toLocaleString() || '0'}</div>
+                        </div>
+                        <div className="px-3 py-2.5 bg-emerald-50 text-emerald-700 rounded-lg font-semibold text-center">
+                          <div className="text-xs text-emerald-600/70 mb-1">Visits</div>
+                          <div className="text-lg font-bold">{c.totalVisits || 0}×</div>
+                        </div>
+                        {(c as any).isAppUser && (
+                          <div className="px-3 py-2.5 bg-purple-50 text-purple-700 rounded-lg font-semibold text-center">
+                            <div className="text-xs text-purple-600/70 mb-1">App</div>
+                            <div className="text-lg font-bold">User</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 px-6">
+                <Search className="h-14 w-14 text-indigo-300/50 mb-4" />
+                <p className="text-lg text-muted-foreground/70 text-center font-medium">
+                  {customerSearchQuery ? 'No customers found' : 'No customers available'}
+                </p>
+                {!customerSearchQuery && regularCustomers.length === 0 && (
+                  <p className="text-base text-muted-foreground/60 mt-2">Try searching by name or phone</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="pt-4 border-t border-gray-100">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowCustomerModal(false);
+                setCustomerSearchQuery('');
+              }}
+              className="h-11 px-6 text-base font-semibold rounded-xl"
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Payment Modal */}
       <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
@@ -767,8 +964,8 @@ export default function Billing() {
             </Label>
           </RadioGroup>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPaymentModal(false)} disabled={isProcessing} className="transition-all duration-140">Cancel</Button>
-            <Button onClick={processPayment} disabled={isProcessing} className="transition-all duration-140 font-semibold">
+            <Button variant="outline" onClick={() => setShowPaymentModal(false)} disabled={isProcessing}>Cancel</Button>
+            <Button onClick={processPayment} disabled={isProcessing} className="text-white font-semibold" style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
               {isProcessing ? 'Processing...' : 'Complete Payment'}
             </Button>
           </DialogFooter>

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ClipboardCheck, Calendar, AlertTriangle, Play, CheckCircle, Bot, TrendingUp, TrendingDown, Package, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -178,8 +177,12 @@ export default function Audit() {
 
   // Clear all analytics history
   const clearAnalyticsHistory = () => {
+    if (!window.confirm('Are you sure you want to clear all analytics history? This action cannot be undone.')) {
+      return;
+    }
     setAnalyticsHistory([]);
     localStorage.removeItem('auditAnalyticsHistory');
+    setAnalytics(null);
     toast({
       title: 'History Cleared',
       description: 'All analytics history has been deleted',
@@ -307,10 +310,12 @@ export default function Audit() {
   const updatePhysicalQty = (itemId: string, qty: number) => {
     setAuditItems(prev => prev.map(item => {
       if (item.itemId === itemId) {
+        const safeQty = Math.max(0, qty); // Prevent negative quantities
+        const systemStock = item.systemQty ?? item.systemStock ?? 0;
         return {
           ...item,
-          physicalQty: qty,
-          difference: qty - item.systemQty
+          physicalQty: safeQty,
+          difference: safeQty - systemStock
         };
       }
       return item;
@@ -394,12 +399,19 @@ export default function Audit() {
   const openAuditDetails = async (id: string) => {
     try {
       setDetailsLoading(true);
+      setDetailsAudit(null);
+      setDetailsItems([]);
       setShowDetailsModal(true);
       const data = await getAuditDetails(id);
       console.log('Audit details loaded:', data);
       console.log('Audit items count:', data.items?.length || 0);
-      setDetailsAudit(data.audit);
-      setDetailsItems(data.items || []);
+      if (data?.data?.audit) {
+        setDetailsAudit(data.data.audit);
+        setDetailsItems(data.data.items || []);
+      } else {
+        setDetailsAudit(data.audit);
+        setDetailsItems(data.items || []);
+      }
     } catch (error: any) {
       console.error('Failed to load audit details:', error);
       toast({ title: 'Error', description: error.message || 'Failed to load audit details', variant: 'destructive' });
@@ -410,6 +422,24 @@ export default function Audit() {
   };
 
   const loadAnalytics = async () => {
+    // Validate required parameters
+    if (analyticsType === 'category' && !analyticsCategory) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select a category first',
+        variant: 'destructive'
+      });
+      return;
+    }
+    if (analyticsType === 'rack' && !analyticsRack) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select a rack first',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     try {
       setAnalyticsLoading(true);
       setAnalytics(null); // Clear stale data
@@ -446,80 +476,93 @@ export default function Audit() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Stock Audit</h1>
-          <p className="text-muted-foreground/70 font-medium">Physical stock verification and reconciliation</p>
-        </div>
-        {!auditInProgress && (
-          <Button onClick={() => setShowStartAuditModal(true)}>
-            <Play className="mr-2 h-4 w-4" />
-            Start New Audit
-          </Button>
-        )}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Stock Audit</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Physical stock verification and reconciliation</p>
       </div>
 
-
-
+      {/* Summary stat cards */}
+      {!auditInProgress && (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="rounded-2xl p-5 text-white shadow-sm" style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
+            <div className="text-xs font-semibold opacity-80 uppercase tracking-wider mb-1">Last Audit</div>
+            <div className="text-sm font-bold truncate">
+              {lastAudit ? (() => {
+                const dateStr = (lastAudit as any).createdAt || (lastAudit as any).completedAt;
+                if (!dateStr) return 'No date';
+                try {
+                  return format(new Date(dateStr), 'dd MMM yyyy');
+                } catch (e) {
+                  return 'Invalid Date';
+                }
+              })() : 'No audits yet'}
+            </div>
+          </div>
+          <div className="rounded-2xl p-5 text-white shadow-sm" style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
+            <div className="text-xs font-semibold opacity-80 uppercase tracking-wider mb-1">Audit Status</div>
+            <div className="text-sm font-bold">Ready to Audit</div>
+          </div>
+          <div className="rounded-2xl p-5 text-white shadow-sm hidden md:block" style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}>
+            <div className="text-xs font-semibold opacity-80 uppercase tracking-wider mb-1">Analytics History</div>
+            <div className="text-sm font-bold">{analyticsHistory.length} / 3 saved</div>
+          </div>
+        </div>
+      )}
       {/* Audit Analytics Section */}
       {!auditInProgress && (
-        <Card className="micro-interaction">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Audit Analytics
-                </CardTitle>
-                <CardDescription>
-                  Analyze inventory by expiry, sales performance, and stock status
-                </CardDescription>
-              </div>
-              <div className="flex gap-2 items-center">
-                <Select value={analyticsType} onValueChange={(v: StockAuditType) => setAnalyticsType(v)}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
+        <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/40 bg-slate-50/50 flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="font-semibold text-foreground flex items-center gap-2">
+                <Package className="h-4 w-4 text-indigo-500" />
+                Audit Analytics
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Analyze inventory by expiry, sales performance, and stock status</p>
+            </div>
+            <div className="flex gap-2 items-center">
+              <Select value={analyticsType} onValueChange={(v: StockAuditType) => setAnalyticsType(v)}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full">Full Inventory</SelectItem>
+                  <SelectItem value="category">By Category</SelectItem>
+                  <SelectItem value="rack">By Rack</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {analyticsType === 'category' && (
+                <Select value={analyticsCategory} onValueChange={setAnalyticsCategory}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="full">Full Inventory</SelectItem>
-                    <SelectItem value="category">By Category</SelectItem>
-                    <SelectItem value="rack">By Rack</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+              )}
 
-                {analyticsType === 'category' && (
-                  <Select value={analyticsCategory} onValueChange={setAnalyticsCategory}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+              {analyticsType === 'rack' && (
+                <Select value={analyticsRack} onValueChange={setAnalyticsRack}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select Rack" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {racks.map((rack) => (
+                      <SelectItem key={rack} value={rack}>{rack}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
 
-                {analyticsType === 'rack' && (
-                  <Select value={analyticsRack} onValueChange={setAnalyticsRack}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select Rack" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {racks.map((rack) => (
-                        <SelectItem key={rack} value={rack}>{rack}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-
-                <Button onClick={loadAnalytics} disabled={analyticsLoading}>
-                  {analyticsLoading ? 'Loading...' : 'Load Analytics'}
-                </Button>
-              </div>
+              <Button onClick={loadAnalytics} disabled={analyticsLoading} style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }} className="text-white">
+                {analyticsLoading ? 'Loading...' : 'Load Analytics'}
+              </Button>
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="p-6">
             {analytics && (
               <Tabs defaultValue="expired" className="w-full">
                 <TabsList className="grid w-full grid-cols-6">
@@ -540,18 +583,18 @@ export default function Audit() {
                       Total Value: ₹{(analytics.expired?.totalValue ?? 0).toLocaleString()}
                     </Badge>
                   </div>
-                  <div className="border rounded-lg">
+                  <div className="border rounded-xl overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead>Medicine</TableHead>
-                          <TableHead>Generic</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Batch</TableHead>
-                          <TableHead>Expiry Date</TableHead>
-                          <TableHead className="text-right">Days Expired</TableHead>
-                          <TableHead className="text-right">Qty</TableHead>
-                          <TableHead className="text-right">Value</TableHead>
+                        <TableRow className="bg-slate-50/80">
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Medicine</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Generic</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Category</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Batch</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Expiry Date</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Days Expired</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Qty</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Value</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -593,18 +636,18 @@ export default function Audit() {
                       Total Value: ₹{(analytics.expiringSoon?.totalValue ?? 0).toLocaleString()}
                     </Badge>
                   </div>
-                  <div className="border rounded-lg">
+                  <div className="border rounded-xl overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead>Medicine</TableHead>
-                          <TableHead>Generic</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Batch</TableHead>
-                          <TableHead>Expiry Date</TableHead>
-                          <TableHead className="text-right">Days Left</TableHead>
-                          <TableHead className="text-right">Qty</TableHead>
-                          <TableHead className="text-right">Value</TableHead>
+                        <TableRow className="bg-slate-50/80">
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Medicine</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Generic</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Category</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Batch</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Expiry Date</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Days Left</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Qty</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Value</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -655,18 +698,18 @@ export default function Audit() {
                       </Badge>
                     </div>
                   </div>
-                  <div className="border rounded-lg">
+                  <div className="border rounded-xl overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead>Medicine</TableHead>
-                          <TableHead>Generic</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead className="text-right">Qty Sold</TableHead>
-                          <TableHead className="text-right">Revenue</TableHead>
-                          <TableHead className="text-right">Cost</TableHead>
-                          <TableHead className="text-right">Profit</TableHead>
-                          <TableHead className="text-right">Sales Count</TableHead>
+                        <TableRow className="bg-slate-50/80">
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Medicine</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Generic</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Category</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Qty Sold</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Revenue</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Cost</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Profit</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Sales Count</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -704,17 +747,17 @@ export default function Audit() {
                       Revenue: ₹{(analytics.lowSales?.totalRevenue ?? 0).toLocaleString()}
                     </Badge>
                   </div>
-                  <div className="border rounded-lg">
+                  <div className="border rounded-xl overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead>Medicine</TableHead>
-                          <TableHead>Generic</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead className="text-right">Qty Sold</TableHead>
-                          <TableHead className="text-right">Revenue</TableHead>
-                          <TableHead className="text-right">Profit</TableHead>
-                          <TableHead className="text-right">Sales Count</TableHead>
+                        <TableRow className="bg-slate-50/80">
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Medicine</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Generic</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Category</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Qty Sold</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Revenue</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Profit</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Sales Count</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -751,15 +794,15 @@ export default function Audit() {
                       {analytics.zeroSales?.count ?? 0} products not sold
                     </Badge>
                   </div>
-                  <div className="border rounded-lg">
+                  <div className="border rounded-xl overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead>Medicine</TableHead>
-                          <TableHead>Generic</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Rack</TableHead>
-                          <TableHead className="text-right">Current Stock</TableHead>
+                        <TableRow className="bg-slate-50/80">
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Medicine</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Generic</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Category</TableHead>
+                          <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Rack</TableHead>
+                          <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Current Stock</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -800,7 +843,7 @@ export default function Audit() {
                   </div>
                   
                   {analyticsHistory.length === 0 ? (
-                    <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                    <div className="text-center py-12 border-2 border-dashed rounded-xl">
                       <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-30 text-muted-foreground" />
                       <p className="text-muted-foreground">No analytics history yet</p>
                       <p className="text-sm text-muted-foreground mt-2">Load analytics to automatically save to history</p>
@@ -808,52 +851,38 @@ export default function Audit() {
                   ) : (
                     <div className="space-y-4">
                       {analyticsHistory.map((entry, index) => (
-                        <Card key={entry.id} className="border-2 hover:border-primary/50 transition-colors">
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <CardTitle className="text-base flex items-center gap-2">
-                                  <Badge variant="outline">
-                                    #{analyticsHistory.length - index}
-                                  </Badge>
+                        <div key={entry.id} className="rounded-xl border border-border/50 hover:border-indigo-300/60 transition-colors p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <Badge variant="outline" className="text-xs">#{analyticsHistory.length - index}</Badge>
+                                <span className="font-semibold text-sm">
                                   {entry.type === 'full' && 'Full Inventory Analytics'}
                                   {entry.type === 'category' && `Category: ${entry.category}`}
                                   {entry.type === 'rack' && `Rack: ${entry.rack}`}
-                                </CardTitle>
-                                <CardDescription className="mt-1">
-                                  {format(new Date(entry.timestamp), 'dd MMM yyyy, hh:mm a')}
-                                </CardDescription>
+                                </span>
                               </div>
-                              <Button size="sm" onClick={() => loadHistoryEntry(entry.id)}>
-                                Load This Report
-                              </Button>
+                              <p className="text-xs text-muted-foreground">{format(new Date(entry.timestamp), 'dd MMM yyyy, hh:mm a')}</p>
                             </div>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                              <div className="text-center p-3 bg-red-50 rounded-lg">
-                                <div className="text-2xl font-bold text-red-600">{entry.data.expired?.count ?? 0}</div>
-                                <div className="text-xs text-muted-foreground mt-1">Expired</div>
+                            <Button size="sm" onClick={() => loadHistoryEntry(entry.id)} style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }} className="text-white">
+                              Load This Report
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                            {[
+                              { label: 'Expired', value: entry.data.expired?.count ?? 0, bg: 'bg-red-50', color: 'text-red-600' },
+                              { label: 'Expiring Soon', value: entry.data.expiringSoon?.count ?? 0, bg: 'bg-orange-50', color: 'text-orange-600' },
+                              { label: 'High Sales', value: entry.data.highSales?.count ?? 0, bg: 'bg-emerald-50', color: 'text-emerald-600' },
+                              { label: 'Low Sales', value: entry.data.lowSales?.count ?? 0, bg: 'bg-amber-50', color: 'text-amber-600' },
+                              { label: 'Zero Sales', value: entry.data.zeroSales?.count ?? 0, bg: 'bg-slate-50', color: 'text-slate-600' },
+                            ].map(s => (
+                              <div key={s.label} className={`text-center p-3 ${s.bg} rounded-lg`}>
+                                <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
+                                <div className="text-xs text-muted-foreground mt-1">{s.label}</div>
                               </div>
-                              <div className="text-center p-3 bg-orange-50 rounded-lg">
-                                <div className="text-2xl font-bold text-orange-600">{entry.data.expiringSoon?.count ?? 0}</div>
-                                <div className="text-xs text-muted-foreground mt-1">Expiring Soon</div>
-                              </div>
-                              <div className="text-center p-3 bg-green-50 rounded-lg">
-                                <div className="text-2xl font-bold text-green-600">{entry.data.highSales?.count ?? 0}</div>
-                                <div className="text-xs text-muted-foreground mt-1">High Sales</div>
-                              </div>
-                              <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                                <div className="text-2xl font-bold text-yellow-600">{entry.data.lowSales?.count ?? 0}</div>
-                                <div className="text-xs text-muted-foreground mt-1">Low Sales</div>
-                              </div>
-                              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                                <div className="text-2xl font-bold text-gray-600">{entry.data.zeroSales?.count ?? 0}</div>
-                                <div className="text-xs text-muted-foreground mt-1">Zero Sales</div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                            ))}
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -875,37 +904,35 @@ export default function Audit() {
                 <p>Loading analytics...</p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* AI Audit Assistant - Prediction Chat */}
       {!auditInProgress && (
-        <Card className="micro-interaction">
-          <CardHeader className="flex flex-row items-start justify-between gap-6">
-            <div className="flex gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Bot className="h-5 w-5 text-primary" />
+        <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/40 bg-slate-50/50 flex items-start justify-between gap-6">
+            <div className="flex gap-3 items-start">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-sm flex-shrink-0">
+                <Bot className="h-5 w-5 text-white" />
               </div>
               <div>
-                <CardTitle className="text-base">AI Audit Assistant</CardTitle>
-                <CardDescription>
-                  Uses the last 12 months of sales to forecast medicine demand for a future month.
-                </CardDescription>
+                <h2 className="font-semibold text-foreground">AI Audit Assistant</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Uses the last 12 months of sales to forecast medicine demand for a future month.</p>
               </div>
             </div>
             <div className="space-y-2 text-sm max-w-md">
-              <div className="rounded-lg border bg-muted/40 p-3">
-                <p className="font-medium mb-1">How this works</p>
-                <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+              <div className="rounded-xl border border-border/50 bg-slate-50/60 p-3">
+                <p className="font-semibold text-xs mb-1">How this works</p>
+                <ol className="list-decimal list-inside space-y-1 text-xs text-muted-foreground">
                   <li>Model is trained on 1 year of stock ledger data.</li>
                   <li>Select which month you want the system to predict.</li>
                   <li>Shows sales from the same month last year, current stock, and recommended purchases.</li>
                 </ol>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          </div>
+          <div className="p-6 space-y-4">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="space-y-2">
                 <p className="text-sm font-medium flex items-center gap-2">
@@ -1044,19 +1071,19 @@ export default function Audit() {
             )}
 
             {assistantPredictions.length > 0 && (
-              <div className="mt-2 border rounded-md max-h-[320px] overflow-auto">
+              <div className="mt-2 border rounded-xl overflow-hidden max-h-[320px] overflow-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Medicine</TableHead>
-                      <TableHead className="text-right">
+                    <TableRow className="bg-slate-50/80">
+                      <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Medicine</TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
                         {assistantPredictionMetadata?.monthName && assistantPredictionMetadata?.previousYear
                           ? `${assistantPredictionMetadata.monthName} ${assistantPredictionMetadata.previousYear} Sales`
                           : 'Previous Year Sales'}
                       </TableHead>
-                      <TableHead className="text-right">Current Stock</TableHead>
-                      <TableHead className="text-right">Recommended Purchase</TableHead>
-                      <TableHead className="text-right">Confidence</TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Current Stock</TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Recommended Purchase</TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Confidence</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1080,69 +1107,66 @@ export default function Audit() {
                 </Table>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Active Audit View */}
       {auditInProgress && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+        <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/40 bg-slate-50/50 flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
+              <h2 className="font-semibold text-foreground flex items-center gap-2">
                 <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
                 </span>
                 Audit in Progress
-              </CardTitle>
-              <CardDescription>
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {(activeAuditMeta?.type || auditType) === 'full'
                   ? 'Full Inventory Audit'
                   : (activeAuditMeta?.type || auditType) === 'category'
                     ? `Category: ${activeAuditMeta?.category || selectedCategory}`
                     : `Rack: ${activeAuditMeta?.rack || selectedRack}`} · {auditItems.length} items
-              </CardDescription>
+              </p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={cancelAudit}>Cancel Audit</Button>
-              <Button
-                onClick={() => setShowApplyAdjustmentsDialog(true)}
-                disabled={loading}
-              >
+              <Button onClick={() => setShowApplyAdjustmentsDialog(true)} disabled={loading} style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }} className="text-white">
                 <CheckCircle className="mr-2 h-4 w-4" />
                 {itemsWithMismatch === 0 ? 'Complete Audit' : `Review & Complete (${itemsWithMismatch})`}
               </Button>
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[300px]">Medicine</TableHead>
-                  <TableHead>Batch</TableHead>
-                  <TableHead className="text-center">System Qty</TableHead>
-                  <TableHead className="text-center">Physical Qty</TableHead>
-                  <TableHead className="text-center">Difference</TableHead>
-                  <TableHead className="text-right">Note</TableHead>
+                <TableRow className="bg-slate-50/80">
+                  <TableHead className="w-[300px] text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Medicine</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Batch</TableHead>
+                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">System Qty</TableHead>
+                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Physical Qty</TableHead>
+                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Difference</TableHead>
+                  <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Note</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {auditItems.map((item) => (
+                {auditItems.map((item, idx) => (
                   <TableRow
-                    key={item.itemId}
+                    key={item.itemId || `${item.medicineId}-${item.batchId}-${idx}`}
                     className={cn(
-                      item.difference < 0 && "bg-red-50",
-                      item.difference > 0 && "bg-green-50"
+                      (item.difference ?? 0) < 0 && "bg-red-50/60",
+                      (item.difference ?? 0) > 0 && "bg-emerald-50/60"
                     )}
                   >
-                    <TableCell className="font-medium">{item.medicineName}</TableCell>
+                    <TableCell className="font-medium">{item.medicineName || 'Unknown'}</TableCell>
                     <TableCell className="text-muted-foreground">{item.batchNumber || '—'}</TableCell>
-                    <TableCell className="text-center">{item.systemQty}</TableCell>
+                    <TableCell className="text-center font-semibold">{item.systemQty ?? item.systemStock ?? 0}</TableCell>
                     <TableCell className="text-center">
                       <Input
                         type="number"
-                        value={item.physicalQty}
+                        value={item.physicalQty ?? 0}
                         onChange={(e) => updatePhysicalQty(item.itemId, parseInt(e.target.value) || 0)}
                         onBlur={() => persistItem(item.itemId)}
                         className="w-24 text-center mx-auto"
@@ -1151,11 +1175,11 @@ export default function Audit() {
                     <TableCell className="text-center">
                       <span className={cn(
                         "font-semibold",
-                        item.difference < 0 && "text-destructive",
-                        item.difference > 0 && "text-green-600",
-                        item.difference === 0 && "text-muted-foreground"
+                        (item.difference ?? 0) < 0 && "text-destructive",
+                        (item.difference ?? 0) > 0 && "text-green-600",
+                        (item.difference ?? 0) === 0 && "text-muted-foreground"
                       )}>
-                        {item.difference > 0 && '+'}{item.difference}
+                        {(item.difference ?? 0) > 0 && '+'}{item.difference ?? 0}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
@@ -1177,83 +1201,58 @@ export default function Audit() {
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Analytics History Section */}
       {!auditInProgress && analyticsHistory.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Analytics History
-                </CardTitle>
-                <CardDescription>Recent audit analytics reports (max 3 entries)</CardDescription>
+        <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/40 bg-slate-50/50 flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold text-foreground flex items-center gap-2">
+                <Package className="h-4 w-4 text-indigo-500" />
+                Analytics History
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Recent audit analytics reports (max 3 entries)</p>
+            </div>
+            <Button variant="destructive" size="sm" onClick={clearAnalyticsHistory}>Clear All</Button>
+          </div>
+          <div className="p-6 space-y-3">
+            {analyticsHistory.map((entry, index) => (
+              <div key={entry.id} className="rounded-xl border border-border/50 hover:border-indigo-300/60 transition-colors cursor-pointer p-4" onClick={() => loadHistoryEntry(entry.id)}>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="outline" className="text-xs">#{analyticsHistory.length - index}</Badge>
+                      <span className="font-semibold text-sm">
+                        {entry.type === 'full' && 'Full Inventory Analytics'}
+                        {entry.type === 'category' && `Category: ${entry.category}`}
+                        {entry.type === 'rack' && `Rack: ${entry.rack}`}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">{format(new Date(entry.timestamp), 'dd MMM yyyy, hh:mm a')}</div>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); loadHistoryEntry(entry.id); }}>Load Report</Button>
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {[
+                    { label: 'Expired', value: entry.data.expired?.count ?? 0, bg: 'bg-red-50', color: 'text-red-600' },
+                    { label: 'Expiring', value: entry.data.expiringSoon?.count ?? 0, bg: 'bg-orange-50', color: 'text-orange-600' },
+                    { label: 'High Sales', value: entry.data.highSales?.count ?? 0, bg: 'bg-emerald-50', color: 'text-emerald-600' },
+                    { label: 'Low Sales', value: entry.data.lowSales?.count ?? 0, bg: 'bg-amber-50', color: 'text-amber-600' },
+                    { label: 'Zero Sales', value: entry.data.zeroSales?.count ?? 0, bg: 'bg-slate-50', color: 'text-slate-600' },
+                  ].map(s => (
+                    <div key={s.label} className={`text-center p-2 ${s.bg} rounded-lg`}>
+                      <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
+                      <div className="text-[10px] text-muted-foreground">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <Button variant="destructive" size="sm" onClick={clearAnalyticsHistory}>
-                Clear All
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {analyticsHistory.map((entry, index) => (
-                <Card key={entry.id} className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => loadHistoryEntry(entry.id)}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="outline">
-                            #{analyticsHistory.length - index}
-                          </Badge>
-                          <span className="font-semibold">
-                            {entry.type === 'full' && 'Full Inventory Analytics'}
-                            {entry.type === 'category' && `Category: ${entry.category}`}
-                            {entry.type === 'rack' && `Rack: ${entry.rack}`}
-                          </span>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {format(new Date(entry.timestamp), 'dd MMM yyyy, hh:mm a')}
-                        </div>
-                      </div>
-                      <Button size="sm" variant="outline" onClick={(e) => {
-                        e.stopPropagation();
-                        loadHistoryEntry(entry.id);
-                      }}>
-                        Load Report
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-5 gap-2">
-                      <div className="text-center p-2 bg-red-50 rounded">
-                        <div className="text-xl font-bold text-red-600">{entry.data.expired?.count ?? 0}</div>
-                        <div className="text-[10px] text-muted-foreground">Expired</div>
-                      </div>
-                      <div className="text-center p-2 bg-orange-50 rounded">
-                        <div className="text-xl font-bold text-orange-600">{entry.data.expiringSoon?.count ?? 0}</div>
-                        <div className="text-[10px] text-muted-foreground">Expiring</div>
-                      </div>
-                      <div className="text-center p-2 bg-green-50 rounded">
-                        <div className="text-xl font-bold text-green-600">{entry.data.highSales?.count ?? 0}</div>
-                        <div className="text-[10px] text-muted-foreground">High Sales</div>
-                      </div>
-                      <div className="text-center p-2 bg-yellow-50 rounded">
-                        <div className="text-xl font-bold text-yellow-600">{entry.data.lowSales?.count ?? 0}</div>
-                        <div className="text-[10px] text-muted-foreground">Low Sales</div>
-                      </div>
-                      <div className="text-center p-2 bg-gray-50 rounded">
-                        <div className="text-xl font-bold text-gray-600">{entry.data.zeroSales?.count ?? 0}</div>
-                        <div className="text-[10px] text-muted-foreground">Zero Sales</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+        </div>
       )}
 
 
@@ -1403,13 +1402,18 @@ export default function Audit() {
                     </TableRow>
                   ) : (
                     detailsItems.map((i) => (
-                      <TableRow key={i.itemId}>
-                        <TableCell className="font-medium">{i.medicineName}</TableCell>
+                      <TableRow key={i.itemId || i.medicineId}>
+                        <TableCell className="font-medium">{i.medicineName || 'Unknown'}</TableCell>
                         <TableCell className="text-muted-foreground">{i.batchNumber || '—'}</TableCell>
-                        <TableCell className="text-center">{i.systemQty}</TableCell>
-                        <TableCell className="text-center">{i.physicalQty}</TableCell>
-                        <TableCell className="text-center">{i.difference}</TableCell>
-                        <TableCell className="text-muted-foreground">{i.note || '-'}</TableCell>
+                        <TableCell className="text-center font-semibold">{i.systemQty ?? i.systemStock ?? 0}</TableCell>
+                        <TableCell className="text-center font-semibold">{i.physicalQty ?? 0}</TableCell>
+                        <TableCell className={cn('text-center font-semibold', {
+                          'text-red-600': (i.difference ?? 0) !== 0,
+                          'text-green-600': (i.difference ?? 0) === 0
+                        })}>
+                          {(i.difference ?? 0) > 0 ? '+' : ''}{i.difference ?? 0}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm max-w-[150px] truncate">{i.note || '-'}</TableCell>
                       </TableRow>
                     ))
                   )}

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Save, Database, Download, RefreshCw, CheckCircle, UserPlus, Trash2, Mail, Lock, User } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Save, Database, Download, RefreshCw, CheckCircle, UserPlus, Trash2, Mail, Lock, User, Bell, MessageSquare, Eye, Send, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,6 +41,10 @@ import {
   updateUserStatus,
   type AppUser,
   type BackupRecord,
+  getStockNotificationPreview,
+  sendStockSMS,
+  sendStockWhatsApp,
+  type StockSnapshot,
 } from '@/lib/api';
 import { downloadPredictionDataset, uploadPredictionDataset } from '@/lib/api';
 
@@ -100,6 +103,12 @@ export default function Settings() {
   const [downloadingDataset, setDownloadingDataset] = useState(false);
   const [uploadingDataset, setUploadingDataset] = useState(false);
   const [datasetFile, setDatasetFile] = useState<File | null>(null);
+
+  // Twilio notifications
+  const [notifPreview, setNotifPreview] = useState<StockSnapshot | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [sendingSMS, setSendingSMS] = useState(false);
+  const [sendingWA, setSendingWA] = useState(false);
 
   const lastBackupLabel = useMemo(() => {
     const latest = backups[0];
@@ -371,22 +380,48 @@ export default function Settings() {
     }
   };
 
+  const handlePreviewNotification = async () => {
+    try {
+      setLoadingPreview(true);
+      const data = await getStockNotificationPreview();
+      setNotifPreview(data);
+    } catch (err: any) {
+      toast({ title: 'Preview Failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const handleSendWhatsApp = async () => {
+    try {
+      setSendingWA(true);
+      await sendStockWhatsApp();
+      toast({ title: 'WhatsApp Sent', description: 'Stock report sent to your WhatsApp successfully' });
+    } catch (err: any) {
+      toast({ title: 'WhatsApp Failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setSendingWA(false);
+    }
+  };
+
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 w-full px-4 sm:px-6 lg:px-8 py-4">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground/70 font-medium">Manage your pharmacy settings and preferences</p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Settings</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage your pharmacy settings and preferences</p>
+        </div>
       </div>
 
       {/* Shop Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Shop Information</CardTitle>
-          <CardDescription>Basic details about your pharmacy</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+      <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 border-b border-border/40 bg-slate-50/50">
+          <h2 className="font-semibold text-foreground">Shop Information</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Basic details about your pharmacy</p>
+        </div>
+        <div className="p-4 sm:p-6 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="shopName">Shop Name</Label>
               <Input
@@ -404,7 +439,7 @@ export default function Settings() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="phone">Phone Number</Label>
               <Input
@@ -423,22 +458,22 @@ export default function Settings() {
             />
           </div>
           <div className="flex justify-end">
-            <Button onClick={handleSaveShopInfo}>
+            <Button onClick={handleSaveShopInfo} style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }} className="text-white">
               <Save className="mr-2 h-4 w-4" />
               Save Changes
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Tax Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Tax Settings</CardTitle>
-          <CardDescription>Configure GST rates for your products</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-4 gap-4">
+      <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 border-b border-border/40 bg-slate-50/50">
+          <h2 className="font-semibold text-foreground">Tax Settings</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Configure GST rates for your products</p>
+        </div>
+        <div className="p-4 sm:p-6 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="gst5">GST 5% Rate</Label>
               <div className="flex items-center gap-2">
@@ -512,25 +547,22 @@ export default function Settings() {
             </Select>
           </div>
           <div className="flex justify-end">
-            <Button onClick={handleSaveTaxSettings}>
+            <Button onClick={handleSaveTaxSettings} style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }} className="text-white">
               <Save className="mr-2 h-4 w-4" />
               Save Tax Settings
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* AI & Prediction Dataset */}
-      <Card>
-        <CardHeader>
-          <CardTitle>AI Prediction Dataset</CardTitle>
-          <CardDescription>
-            Upload or download the 1-year sales dataset used to train the demand prediction
-            model that powers the AI Audit Assistant.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-[2fr,1fr] items-end">
+      <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 border-b border-border/40 bg-slate-50/50">
+          <h2 className="font-semibold text-foreground">AI Prediction Dataset</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Upload or download the 1-year sales dataset used to train the demand prediction model that powers the AI Audit Assistant.</p>
+        </div>
+        <div className="p-4 sm:p-6 space-y-4">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-[2fr,1fr] items-end">
             <div className="space-y-2">
               <Label htmlFor="datasetFile">Upload custom dataset (CSV)</Label>
               <Input
@@ -545,56 +577,43 @@ export default function Settings() {
               </p>
             </div>
             <div className="flex flex-col gap-2 md:items-end">
-              <Button
-                onClick={handleUploadDataset}
-                disabled={uploadingDataset}
-              >
+              <Button onClick={handleUploadDataset} disabled={uploadingDataset} style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }} className="text-white">
                 {uploadingDataset ? 'Uploading & Training…' : 'Upload & Train Model'}
               </Button>
-              <Button
-                variant="outline"
-                onClick={handleDownloadDataset}
-                disabled={downloadingDataset}
-              >
+              <Button variant="outline" onClick={handleDownloadDataset} disabled={downloadingDataset}>
                 <Download className="mr-2 h-4 w-4" />
                 {downloadingDataset ? 'Preparing…' : 'Download Dataset'}
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Backup & Data */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Backup & Data</CardTitle>
-          <CardDescription>Manage your data backups and exports</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+      <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 border-b border-border/40 bg-slate-50/50">
+          <h2 className="font-semibold text-foreground">Backup & Data</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Manage your data backups and exports</p>
+        </div>
+        <div className="p-4 sm:p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl border border-emerald-200/60 bg-emerald-50/40">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-                <Database className="h-6 w-6 text-green-600" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-sm">
+                <Database className="h-6 w-6 text-white" />
               </div>
               <div>
-                <div className="font-medium">Last Backup</div>
-                <div className="text-sm text-muted-foreground flex items-center gap-1">
-                  <CheckCircle className="h-3 w-3 text-green-600" />
+                <div className="font-semibold text-foreground">Last Backup</div>
+                <div className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <CheckCircle className="h-3 w-3 text-emerald-600" />
                   {lastBackupLabel}
                 </div>
               </div>
             </div>
-            <Button onClick={handleBackupNow} disabled={isBackingUp}>
+            <Button onClick={handleBackupNow} disabled={isBackingUp} style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }} className="text-white">
               {isBackingUp ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Backing Up...
-                </>
+                <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Backing Up...</>
               ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Backup Now
-                </>
+                <><RefreshCw className="mr-2 h-4 w-4" />Backup Now</>
               )}
             </Button>
           </div>
@@ -602,146 +621,253 @@ export default function Settings() {
           <Separator />
 
           <div className="space-y-2">
-            <div className="font-medium">Backups</div>
-            <div className="text-sm text-muted-foreground">
-              Click a backup to retrieve that snapshot only
-            </div>
-            <div className="rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Created By</TableHead>
-                    <TableHead>Items</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {backups.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground">
-                        No backups found
-                      </TableCell>
+            <div className="font-semibold text-sm">Backup History</div>
+            <div className="text-xs text-muted-foreground">Click Retrieve to restore a snapshot</div>
+            <div className="rounded-xl border border-border/50 overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50/80">
+                      <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Date</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 hidden sm:table-cell">Created By</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Items</TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Actions</TableHead>
                     </TableRow>
-                  ) : (
-                    backups.slice(0, 10).map((b) => (
-                      <TableRow key={b._id}>
-                        <TableCell className="font-medium">
-                          {new Date(b.createdAt).toLocaleString('en-IN')}
-                        </TableCell>
-                        <TableCell>{b.createdBy || 'system'}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {(b.counts?.medicines ?? 0)} medicines, {(b.counts?.batches ?? 0)} batches
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={() => handleViewBackup(b._id)}>
-                              Retrieve
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => setConfirmDeleteBackupId(b._id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                  </TableHeader>
+                  <TableBody>
+                    {backups.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground py-8">No backups found</TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      backups.slice(0, 10).map((b) => (
+                        <TableRow key={b._id} className="hover:bg-slate-50/60">
+                          <TableCell className="font-medium text-sm">{new Date(b.createdAt).toLocaleString('en-IN')}</TableCell>
+                          <TableCell className="text-sm hidden sm:table-cell">{b.createdBy || 'system'}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {(b.counts?.medicines ?? 0)} medicines, {(b.counts?.batches ?? 0)} batches
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex flex-col sm:flex-row justify-end gap-1 sm:gap-2">
+                              <Button variant="outline" size="sm" onClick={() => handleViewBackup(b._id)} className="text-xs">Retrieve</Button>
+                              <Button variant="destructive" size="sm" onClick={() => setConfirmDeleteBackupId(b._id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-50/60 border border-border/40">
             <div>
-              <div className="font-medium">Export Data</div>
-              <div className="text-sm text-muted-foreground">
-                Download all your data in CSV format
-              </div>
+              <div className="font-semibold text-sm">Export Data</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Download all your data in CSV format</div>
             </div>
-            <Button variant="outline" onClick={handleExportData}>
+            <Button variant="outline" onClick={handleExportData} className="w-full sm:w-auto">
               <Download className="mr-2 h-4 w-4" />
               Export All Data
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* WhatsApp Stock Notifications */}
+      <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 border-b border-border/40 bg-slate-50/50">
+          <div className="flex items-center gap-2">
+            <Bell className="h-4 w-4 text-emerald-500" />
+            <h2 className="font-semibold text-foreground">Stock Notifications (WhatsApp)</h2>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Daily stock report sent automatically via WhatsApp. Configure phone number in backend <code className="bg-slate-100 px-1 rounded text-[11px]">.env</code>.
+          </p>
+        </div>
+        <div className="p-4 sm:p-6 space-y-5">
+          {/* Schedule info */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 text-center">
+              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-1">Schedule</div>
+              <div className="font-semibold text-sm text-emerald-700">Daily 9:00 AM</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">WHATSAPP_NOTIFY_CRON</div>
+            </div>
+            <div className="rounded-xl border border-teal-100 bg-teal-50/40 p-4 text-center">
+              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-1">Channel</div>
+              <div className="font-semibold text-sm text-teal-700">WhatsApp Web</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">Direct WhatsApp API</div>
+            </div>
+            <div className="rounded-xl border border-cyan-100 bg-cyan-50/40 p-4 text-center">
+              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-1">Cost</div>
+              <div className="font-semibold text-sm text-cyan-700">Free</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">No SMS charges</div>
+            </div>
+          </div>
+          {/* Manual send buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button variant="outline" onClick={handlePreviewNotification} disabled={loadingPreview} className="gap-2">
+              <Eye className="h-4 w-4" />
+              {loadingPreview ? 'Loading...' : 'Preview Report'}
+            </Button>
+            <Button onClick={handleSendWhatsApp} disabled={sendingWA} className="gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90">
+              <MessageSquare className="h-4 w-4" />
+              {sendingWA ? 'Sending...' : 'Send WhatsApp Now'}
+            </Button>
+            <a href="https://github.com/pedrosans/whatsapp-web.js" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" className="gap-2">
+                <ExternalLink className="h-4 w-4" />
+                Setup Guide
+              </Button>
+            </a>
+          </div>
+          {/* Live preview panel */}
+          {notifPreview && (
+            <div className="rounded-xl border border-border/50 overflow-hidden">
+              <div className="px-4 py-2.5 bg-slate-50/80 border-b border-border/40 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                Stock Report Preview — {notifPreview.total} medicines
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-border/40">
+                <div className="p-4">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 inline-block" />
+                    <span className="text-xs font-semibold text-emerald-700">Healthy ({notifPreview.healthy.length})</span>
+                  </div>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {notifPreview.healthy.slice(0, 8).map((i, idx) => (
+                      <div key={idx} className="text-xs text-muted-foreground flex justify-between">
+                        <span className="truncate pr-2">{i.name}</span>
+                        <span className="font-medium text-emerald-600 shrink-0">{i.qty}</span>
+                      </div>
+                    ))}
+                    {notifPreview.healthy.length > 8 && <div className="text-[10px] text-muted-foreground">+{notifPreview.healthy.length - 8} more</div>}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-orange-500 inline-block" />
+                    <span className="text-xs font-semibold text-orange-700">Low Stock ({notifPreview.lowStock.length})</span>
+                  </div>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {notifPreview.lowStock.length === 0 && <div className="text-xs text-muted-foreground">None</div>}
+                    {notifPreview.lowStock.map((i, idx) => (
+                      <div key={idx} className="text-xs text-muted-foreground flex justify-between">
+                        <span className="truncate pr-2">{i.name}</span>
+                        <span className="font-medium text-orange-600 shrink-0">{i.qty}/{i.minLevel}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-yellow-500 inline-block" />
+                    <span className="text-xs font-semibold text-yellow-700">Expiring Soon ({notifPreview.expiringSoon.length})</span>
+                  </div>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {notifPreview.expiringSoon.length === 0 && <div className="text-xs text-muted-foreground">None</div>}
+                    {notifPreview.expiringSoon.map((i, idx) => (
+                      <div key={idx} className="text-xs text-muted-foreground flex justify-between">
+                        <span className="truncate pr-2">{i.name}</span>
+                        <span className="font-medium text-yellow-600 shrink-0">{i.daysLeft}d</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-500 inline-block" />
+                    <span className="text-xs font-semibold text-red-700">Expired ({notifPreview.expired.length})</span>
+                  </div>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {notifPreview.expired.length === 0 && <div className="text-xs text-muted-foreground">None</div>}
+                    {notifPreview.expired.map((i, idx) => (
+                      <div key={idx} className="text-xs text-muted-foreground flex justify-between">
+                        <span className="truncate pr-2">{i.name}</span>
+                        <span className="font-medium text-red-600 shrink-0">{i.qty} units</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Sample message */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 overflow-x-auto">
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Sample SMS Format</div>
+            <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono leading-relaxed min-w-fit">{`📦 PHARMACY STOCK REPORT\n22 Mar 2026 | Total: 45 medicines\n━━━━━━━━━━━━━━━━━━━━\n🔴 EXPIRED (2)\n  • Paracetamol 500mg: 30 units\n🟠 LOW STOCK (3)\n  • Metformin 500mg: 8/50 units\n🟡 EXPIRING SOON (4)\n  • Cetirizine 10mg: 60 units (7d left)\n✅ HEALTHY STOCK (36)\n  • Aspirin 75mg: 200 units\n━━━━━━━━━━━━━━━━━━━━\n✅ 36 healthy  🟠 3 low  🟡 4 expiring  🔴 2 expired`}</pre>
+          </div>
+        </div>
+      </div>
 
       {/* User Management */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>Manage system admin and staff access</CardDescription>
-            </div>
-            <Button onClick={() => setShowAddUserDialog(true)}>
-              <UserPlus className="mr-2 h-4 w-4" />
-              Add User
-            </Button>
+      <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 border-b border-border/40 bg-slate-50/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="font-semibold text-foreground">User Management</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Manage system admin and staff access</p>
           </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.filter(u => u.role.toLowerCase() !== 'user').map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>
-                      {user.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={user.status === 'active' ? 'default' : 'secondary'}
-                      className={user.status === 'active' ? 'bg-green-100 text-green-700' : ''}
-                    >
-                      {user.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(user.createdAt).toLocaleDateString('en-IN')}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleUserStatus(user.id)}
-                      >
-                        {user.status === 'active' ? 'Deactivate' : 'Activate'}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteUser(user.id)}
-                        disabled={user.role === 'Admin'}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <Button onClick={() => setShowAddUserDialog(true)} style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }} className="text-white">
+            <UserPlus className="mr-2 h-4 w-4" />
+            Add User
+          </Button>
+        </div>
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="inline-block min-w-full px-4 sm:px-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50/80">
+                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Name</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 hidden sm:table-cell">Email</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Role</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 hidden md:table-cell">Status</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 hidden lg:table-cell">Created</TableHead>
+                  <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {users.filter(u => u.role.toLowerCase() !== 'user').map((user) => (
+                  <TableRow key={user.id} className="hover:bg-slate-50/60">
+                    <TableCell className="font-medium text-sm">{user.name}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground hidden sm:table-cell">{user.email}</TableCell>
+                    <TableCell>
+                      <Badge
+                        className={user.role === 'Admin' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-600 border-slate-200'}
+                        variant="outline"
+                      >
+                        {user.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <Badge
+                        variant="outline"
+                        className={user.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}
+                      >
+                        {user.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
+                      {new Date(user.createdAt).toLocaleDateString('en-IN')}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex flex-col sm:flex-row justify-end gap-1 sm:gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleToggleUserStatus(user.id)} className="text-xs">
+                          {user.status === 'active' ? 'Deactivate' : 'Activate'}
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteUser(user.id)} disabled={user.role === 'Admin'}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </div>
 
       {/* Add User Dialog */}
       <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
@@ -841,7 +967,7 @@ export default function Settings() {
             <div className="text-sm text-muted-foreground">Loading backup…</div>
           ) : (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 {Object.entries(selectedBackup?.counts || {}).map(([k, v]) => (
                   <div key={k} className="flex items-center justify-between rounded-md border p-2">
                     <div className="text-muted-foreground">{k}</div>

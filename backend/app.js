@@ -16,6 +16,8 @@ import predictionRoutes from './routes/predictionRoutes.js';
 import customerRoutes from './routes/customerRoutes.js';
 import authenticate from './middleware/authMiddleware.js';
 import forecastRoutes from './routes/forecastRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import reminderRoutes from './routes/reminderRoutes.js';
 
 export const createApp = () => {
   const app = express();
@@ -51,6 +53,8 @@ export const createApp = () => {
   app.use('/api/prescriptions', prescriptionRoutes);
   app.use('/api/prediction', authenticate, predictionRoutes);
   app.use('/api/customers', authenticate, customerRoutes);
+  app.use('/api/notifications', notificationRoutes);
+  app.use('/api/reminders', reminderRoutes);
 
   app.get('/api', (req, res) => {
     res.json({

@@ -436,8 +436,8 @@ export default function Purchases() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Purchase Orders</h1>
-          <p className="text-muted-foreground">Manage purchase orders and suppliers</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Purchase Orders</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage purchase orders and suppliers</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setShowAddSupplierModal(true)}>
@@ -457,89 +457,93 @@ export default function Purchases() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Purchases</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{purchases.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Suppliers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{suppliers.length}</div>
-          </CardContent>
-        </Card>
+        {[
+          { label: 'Total Orders', value: purchases.length, icon: Package, gradient: 'from-indigo-500 to-violet-600' },
+          { label: 'Active Suppliers', value: suppliers.length, icon: Zap, gradient: 'from-emerald-500 to-teal-600' },
+          { label: 'Received', value: purchases.filter(p => p.status === 'received').length, icon: RefreshCw, gradient: 'from-blue-500 to-cyan-600' },
+          { label: 'Pending', value: purchases.filter(p => p.status === 'upcoming').length, icon: Search, gradient: 'from-amber-500 to-orange-600' },
+        ].map((s, i) => (
+          <div key={i} className={`relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${s.gradient} text-white`}
+            style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}>
+            <div className="absolute -top-3 -right-3 h-16 w-16 rounded-full bg-white/10" />
+            <div className="relative z-10 flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-white/70 mb-2">{s.label}</p>
+                <p className="text-3xl font-extrabold text-white">{s.value}</p>
+              </div>
+              <div className="p-2 rounded-xl bg-white/20">
+                <s.icon className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Purchases Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Purchases</CardTitle>
+      <Card className="border border-border/50 shadow-sm rounded-2xl overflow-hidden">
+        <CardHeader className="border-b border-border/40 bg-slate-50/50">
+          <CardTitle className="text-base font-bold">Recent Purchase Orders</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
-            <div className="text-center py-8">Loading...</div>
+            <div className="text-center py-12 text-muted-foreground">Loading...</div>
           ) : purchases.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No purchases yet. Create your first purchase order.
+            <div className="text-center py-16">
+              <div className="h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                <Package className="h-8 w-8 text-muted-foreground/40" />
+              </div>
+              <p className="font-semibold text-foreground/80 mb-1">No purchases yet</p>
+              <p className="text-sm text-muted-foreground">Create your first purchase order to get started.</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>PO Number</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="bg-slate-50/80 hover:bg-slate-50/80">
+                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">PO Number</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Supplier</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Items</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Total</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Status</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Date</TableHead>
+                  <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {purchases.map((purchase) => (
-                  <TableRow key={purchase._id}>
-                    <TableCell className="font-medium">{purchase.poNumber}</TableCell>
+                  <TableRow key={purchase._id} className="hover:bg-muted/30 transition-colors border-b border-border/30">
+                    <TableCell className="font-semibold text-primary">{purchase.poNumber}</TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">{purchase.supplierId.name}</div>
-                        <div className="text-sm text-muted-foreground">{purchase.supplierId.phone}</div>
+                        <div className="text-xs text-muted-foreground">{purchase.supplierId.phone}</div>
                       </div>
                     </TableCell>
-                    <TableCell>{purchase.items.length} items</TableCell>
-                    <TableCell>₹{purchase.totalAmount.toFixed(2)}</TableCell>
                     <TableCell>
-                      <Badge variant={
-                        purchase.status === 'received' ? 'default' :
-                        purchase.status === 'upcoming' ? 'secondary' :
-                        'destructive'
-                      }>
-                        {purchase.status}
-                      </Badge>
+                      <span className="px-2 py-1 rounded-full text-xs font-semibold bg-muted text-muted-foreground">
+                        {purchase.items.length} items
+                      </span>
                     </TableCell>
-                    <TableCell>{new Date(purchase.createdAt).toLocaleDateString('en-IN')}</TableCell>
+                    <TableCell className="font-semibold">₹{purchase.totalAmount.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                        purchase.status === 'received' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : purchase.status === 'upcoming' ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : 'bg-red-50 text-red-700 border border-red-200'
+                      }`}>
+                        {purchase.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{new Date(purchase.createdAt).toLocaleDateString('en-IN')}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenStatusUpdate(purchase)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
+                        <Button variant="outline" size="sm" onClick={() => handleOpenStatusUpdate(purchase)} className="h-8 text-xs">
+                          <Edit className="h-3.5 w-3.5 mr-1" />
                           Update
                         </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleOpenDelete(purchase)}
+                        <Button variant="ghost" size="sm" onClick={() => handleOpenDelete(purchase)}
                           disabled={purchase.status === 'received'}
-                        >
-                          <Trash2 className="h-4 w-4" />
+                          className="h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10">
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </TableCell>

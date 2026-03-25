@@ -418,6 +418,17 @@ export const uploadTrainingDataset = async (req, res) => {
     const aggregatedCols = ['MedicineName', 'Category', 'AvgMonthlySales'];
     const isAggregatedFormat = aggregatedCols.every(col => headers.includes(col));
 
+    // Check if it's in wide format (Product | Jan-Dec | Total Sales)
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const hasWideFormat = monthNames.some(month => headers.includes(month));
+    const firstColName = headers[0] || '';
+    const isWideFormat = hasWideFormat && (
+      firstColName.toLowerCase() === 'product' ||
+      firstColName.toLowerCase() === 'medicine name' ||
+      firstColName.toLowerCase() === 'medicinename' ||
+      firstColName.toLowerCase() === 'medicine'
+    );
+
     if (hasCorrectFormat) {
       // Good! Save directly
       await fs.promises.rename(file.path, targetPath).catch(async () => {
@@ -425,6 +436,60 @@ export const uploadTrainingDataset = async (req, res) => {
         await fs.promises.writeFile(targetPath, data);
         await fs.promises.unlink(file.path).catch(() => {});
       });
+    } else if (isWideFormat) {
+      // Auto-convert wide format (Product | Jan-Dec) to long format
+      console.log('📊 Detected wide format (Product | Jan-Dec). Auto-converting...');
+      
+      // Save uploaded file for conversion
+      const tempPath = path.join(predictionDir, 'temp_sales_data.csv');
+      await fs.promises.rename(file.path, tempPath).catch(async () => {
+        const data = await fs.promises.readFile(file.path);
+        await fs.promises.writeFile(tempPath, data);
+        await fs.promises.unlink(file.path).catch(() => {});
+      });
+
+      // Run convert_excel_data.py script
+      const pythonCmd = getPythonCommand();
+      const convertExcelScript = path.join(predictionDir, 'convert_excel_data.py');
+      
+      if (!fs.existsSync(convertExcelScript)) {
+        await fs.promises.unlink(tempPath).catch(() => {});
+        return res.status(500).json({
+          success: false,
+          message: 'Conversion script not found. Please contact administrator.',
+        });
+      }
+
+      const convertCommand = `${pythonCmd} "${convertExcelScript}" "${tempPath}"`;
+      
+      try {
+        await new Promise((resolve, reject) => {
+          exec(convertCommand, { 
+            cwd: predictionDir,
+            shell: true,
+            env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+            timeout: 30000
+          }, (error, stdout, stderr) => {
+            if (error) {
+              console.error('Wide format conversion error:', stderr);
+              reject(new Error('Failed to convert wide format: ' + (stderr || error.message)));
+            } else {
+              console.log('Wide format conversion output:', stdout);
+              resolve();
+            }
+          });
+        });
+        
+        // Clean up temp file
+        await fs.promises.unlink(tempPath).catch(() => {});
+      } catch (conversionError) {
+        await fs.promises.unlink(tempPath).catch(() => {});
+        return res.status(400).json({
+          success: false,
+          message: 'CSV format conversion failed. Ensure your CSV has columns: Product (or MedicineName), Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec',
+          details: conversionError.message
+        });
+      }
     } else if (isAggregatedFormat) {
       // Auto-convert aggregated format to historical format
       console.log('Detected aggregated format. Auto-converting...');
@@ -481,7 +546,7 @@ export const uploadTrainingDataset = async (req, res) => {
       await fs.promises.unlink(file.path).catch(() => {});
       return res.status(400).json({
         success: false,
-        message: `Invalid CSV format. Found columns: ${headers.join(', ')}. Required columns: medicineId, medicineName, month, quantity. Each medicine should have one row per month of historical sales data.`,
+        message: `❌ Invalid CSV format detected.\n\n📋 Found columns: ${headers.join(', ')}\n\n✅ Supported formats:\n1. Wide format: Product | Jan | Feb | ... | Dec | Total Sales\n2. Long format: medicineId | medicineName | month | quantity\n\nPlease upload a file with one of these formats.`,
       });
     }
 

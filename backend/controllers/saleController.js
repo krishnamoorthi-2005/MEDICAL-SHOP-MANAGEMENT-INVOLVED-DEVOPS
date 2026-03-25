@@ -15,15 +15,40 @@ const toLocalDateString = (date = new Date()) => {
 };
 
 const generateInvoiceNumber = async () => {
-  const last = await Sale.findOne().sort({ createdAt: -1 }).lean();
+  // Use a counter-based approach with atomic increment to prevent
+  // duplicate invoice numbers under concurrent requests
   const year = new Date().getFullYear();
-  if (!last || !last.invoiceNumber) {
-    return `INV-${year}-0001`;
+  const summary = await DailySalesSummary.findOneAndUpdate(
+    { date: `counter-${year}` },
+    { $inc: { billCount: 1 } },
+    { upsert: true, new: true },
+  ).lean();
+  const seq = summary.billCount || 1;
+  return `INV-${year}-${String(seq).padStart(4, '0')}`;
+};
+
+const generateFallbackInvoiceNumber = () => {
+  // Fallback: Use timestamp + random number for collision avoidance
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `INV-${timestamp}-${random}`;
+};
+
+const normalizePaymentMethod = (value) => {
+  const normalized = String(value || '').trim().toLowerCase();
+
+  if (!normalized) return '';
+  if (['upi', 'online', 'gpay', 'googlepay', 'phonepe', 'paytm', 'scan', 'qr'].includes(normalized)) {
+    return 'upi';
   }
-  const parts = String(last.invoiceNumber).split('-');
-  const seqRaw = parts[parts.length - 1] || '0';
-  const next = Number.parseInt(seqRaw, 10) + 1 || 1;
-  return `INV-${year}-${String(next).padStart(4, '0')}`;
+  if (['cash', 'cashondelivery', 'cod'].includes(normalized)) {
+    return 'cash';
+  }
+  if (['card', 'debit', 'credit'].includes(normalized)) {
+    return 'card';
+  }
+
+  return normalized;
 };
 
 // CREATE SALE + UPDATE DAILY SUMMARY USING MONGODB LEDGER
@@ -36,14 +61,49 @@ export const createSale = async (req, res) => {
   try {
     const { items, customerName, customerId, paymentMethod, discountAmount = 0, taxAmount = 0 } = req.body || {};
 
+    console.log('📝 Sale Request Received:', {
+      itemsCount: items?.length || 0,
+      paymentMethod,
+      customerName,
+      customerId,
+      taxAmount,
+      discountAmount
+    });
+
     if (!Array.isArray(items) || items.length === 0) {
+      console.error('❌ Validation failed: No items in sale');
       return res.status(400).json({ success: false, message: 'No items in sale' });
     }
-    if (!paymentMethod) {
+    const normalizedPaymentMethod = normalizePaymentMethod(paymentMethod);
+
+    if (!normalizedPaymentMethod) {
+      console.error('❌ Validation failed: Payment method is required');
       return res.status(400).json({ success: false, message: 'paymentMethod is required' });
     }
+    
+    // Validate payment method is one of the allowed values
+    const validPaymentMethods = ['cash', 'upi', 'card'];
+    if (!validPaymentMethods.includes(normalizedPaymentMethod)) {
+      console.error('❌ Validation failed: Invalid payment method:', paymentMethod);
+      return res.status(400).json({ success: false, message: `Invalid payment method. Allowed values: ${validPaymentMethods.join(', ')}` });
+    }
 
-    const invoiceNumber = await generateInvoiceNumber();
+    // Validate items structure
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item.medicineId) {
+        console.error(`❌ Validation failed: Item ${i} missing medicineId`);
+        return res.status(400).json({ success: false, message: `Item ${i}: medicineId is required` });
+      }
+      if (!item.quantity) {
+        console.error(`❌ Validation failed: Item ${i} missing quantity`);
+        return res.status(400).json({ success: false, message: `Item ${i}: quantity is required` });
+      }
+      if (typeof item.quantity !== 'number' || item.quantity <= 0) {
+        console.error(`❌ Validation failed: Item ${i} invalid quantity`);
+        return res.status(400).json({ success: false, message: `Item ${i}: quantity must be a positive number` });
+      }
+    }
 
     let subtotal = 0;
     let totalCost = 0;
@@ -148,22 +208,101 @@ export const createSale = async (req, res) => {
       // 2. Persist sale, sale items, stock movements and summary
       const total = subtotal + taxAmount - discountAmount;
       const profit = subtotal - totalCost - discountAmount;
+      
+      // Generate invoice number JUST before saving to prevent duplicate counter increments
+      // Retry up to 3 times with counter-based approach, then fall back to timestamp-based
+      let sale;
+      let invoiceNumber;
+      let retries = 0;
+      const maxRetries = 3;
+      
+      while (retries < maxRetries) {
+        try {
+          invoiceNumber = await generateInvoiceNumber();
+          console.log(`📝 Generated invoice number: ${invoiceNumber} (attempt ${retries + 1})`);
+          
+          const [createdSale] = await Sale.create([
+            {
+              invoiceNumber,
+              customerId: customerId || null,
+              customerName: customerName || '',
+              items: saleItems,
+              subtotal,
+              taxAmount,
+              discountAmount,
+              total,
+              paymentMethod: normalizedPaymentMethod,
+              paymentStatus: 'paid',
+              userId: req.user?.id || null,
+            },
+          ]);
+          
+          sale = createdSale;
+          console.log(`✅ Sale created successfully with ID: ${sale._id}, Invoice: ${invoiceNumber}`);
+          break; // Success, exit retry loop
+        } catch (error) {
+          // Log full error details for debugging
+          console.error(`❌ Error on attempt ${retries + 1}:`, {
+            code: error.code,
+            name: error.name,
+            message: error.message,
+            keyPattern: error.keyPattern,
+            fullError: error.toString(),
+          });
+          
+          // Check if this is a duplicate key error (multiple error format checks)
+          const isDuplicateKeyError = 
+            error.code === 11000 || 
+            error.name === 'MongoServerError' ||
+            error.message?.includes('duplicate key') ||
+            error.message?.includes('E11000') ||
+            (error.keyPattern && Object.keys(error.keyPattern).includes('invoiceNumber'));
+            
+          if (isDuplicateKeyError && retries < maxRetries - 1) {
+            retries++;
+            console.warn(`⚠️  Duplicate invoice number detected, retrying... (attempt ${retries + 1}/${maxRetries})`);
+            continue; // Retry the loop
+          }
+          
+          // Last attempt failed with duplicate key error - use fallback
+          if (isDuplicateKeyError && retries === maxRetries - 1) {
+            retries++;
+            console.warn(`⚠️  Counter-based invoice failed on final attempt, using fallback timestamp-based generator...`);
+            invoiceNumber = generateFallbackInvoiceNumber();
+            console.log(`📝 Generated fallback invoice number: ${invoiceNumber}`);
+            try {
+              const [createdSale] = await Sale.create([
+                {
+                  invoiceNumber,
+                  customerId: customerId || null,
+                  customerName: customerName || '',
+                  items: saleItems,
+                  subtotal,
+                  taxAmount,
+                  discountAmount,
+                  total,
+                  paymentMethod: normalizedPaymentMethod,
+                  paymentStatus: 'paid',
+                  userId: req.user?.id || null,
+                },
+              ]);
+              sale = createdSale;
+              console.log(`✅ Sale created with fallback invoice: ${invoiceNumber}`);
+              break;
+            } catch (fallbackError) {
+              console.error(`❌ Fallback invoice generation also failed:`, fallbackError.message);
+              throw new Error(`Failed to create sale after all attempts. ${fallbackError.message}`);
+            }
+          }
+          
+          // Not a duplicate key error, throw immediately
+          throw error;
+        }
+      }
 
-      const [sale] = await Sale.create([
-        {
-          invoiceNumber,
-          customerId: customerId || null,
-          customerName: customerName || '',
-          items: saleItems,
-          subtotal,
-          taxAmount,
-          discountAmount,
-          total,
-          paymentMethod,
-          paymentStatus: 'paid',
-          userId: req.user?.id || null,
-        },
-      ]);
+      if (!sale) {
+        throw new Error('Failed to create sale after multiple attempts');
+      }
 
       await SaleItem.insertMany(
         saleItems.map((it) => ({

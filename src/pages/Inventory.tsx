@@ -559,75 +559,77 @@ export default function Inventory() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Inventory</h1>
-        <p className="text-muted-foreground/70 font-medium">Manage your stock and medicines</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Inventory</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Manage your stock and medicines</p>
       </div>
 
       {/* Top Bar */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="relative flex-1 w-full sm:max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search medicines..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="pl-9 w-full"
           />
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setShowFilterSheet(true)}>
-            <Filter className="mr-2 h-4 w-4" />
-            Filters
+          <Button variant="outline" onClick={() => setShowFilterSheet(true)} className="gap-2 whitespace-nowrap">
+            <Filter className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Filters</span>
             {(filters.lowStock || filters.nearExpiry || filters.category || filters.manufacturer) && (
-              <Badge variant="secondary" className="ml-2">Active</Badge>
+              <Badge variant="secondary" className="ml-1">Active</Badge>
             )}
           </Button>
-          <Button variant="outline" onClick={() => setShowAddProductModal(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Product
+          <Button variant="outline" onClick={() => setShowAddProductModal(true)} className="gap-2 whitespace-nowrap">
+            <Plus className="h-4 w-4 shrink-0" />
+            <span className="hidden md:inline">New Product</span>
           </Button>
-          <Button onClick={() => setShowAddStockModal(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Stock
+          <Button onClick={() => setShowAddStockModal(true)} className="gap-2 whitespace-nowrap">
+            <Plus className="h-4 w-4 shrink-0" />
+            <span className="hidden md:inline">Add Stock</span>
           </Button>
         </div>
       </div>
 
       {/* Inventory Table or Empty State */}
       {medicines.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center py-20 text-center rounded-2xl bg-slate-50 border border-slate-100 shadow-sm">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200/50 mb-5">
-            <Package className="h-8 w-8 text-slate-400" />
+        <div className="rounded-3xl bg-white border border-border/50 shadow-sm flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50 mb-5">
+            <Package className="h-8 w-8 text-muted-foreground/40" />
           </div>
-          <h3 className="text-xl font-bold text-slate-700 mb-2">No products added yet</h3>
-          <p className="text-slate-500 max-w-sm mb-6 text-sm">
+          <h3 className="text-xl font-extrabold text-foreground mb-2">No products added yet</h3>
+          <p className="text-muted-foreground max-w-sm mb-6 text-sm">
             Start by adding your first product to manage inventory, track stock levels, and monitor expiry dates.
           </p>
-          <Button onClick={() => setShowAddProductModal(true)} size="lg" className="rounded-xl shadow-sm hover:shadow-md transition-all">
+          <Button onClick={() => setShowAddProductModal(true)} size="lg" className="rounded-xl font-bold"
+            style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
             <Plus className="mr-2 h-4 w-4" />
             Add Your First Product
           </Button>
-        </Card>
+        </div>
       ) : (
-        <Card className="card-hover border-slate-200">
-          <Table>
-            <TableHeader className="bg-slate-50/50">
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[250px] font-semibold text-slate-600">Medicine Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead className="text-center">Stock Qty</TableHead>
-                <TableHead>Expiry Date</TableHead>
-                <TableHead>Rack</TableHead>
-                <TableHead className="text-center">Min/Max</TableHead>
-                <TableHead className="text-right">Purchase ₹</TableHead>
-                <TableHead className="text-right">Selling ₹</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
+        <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50/80 hover:bg-slate-50/80">
+                  <TableHead className="w-[200px] sm:w-[250px] text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Medicine Name</TableHead>
+                  <TableHead className="hidden sm:table-cell text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Category</TableHead>
+                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Stock Qty</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Expiry Date</TableHead>
+                  <TableHead className="hidden lg:table-cell text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Rack</TableHead>
+                  <TableHead className="hidden lg:table-cell text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Min/Max</TableHead>
+                  <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Purchase ₹</TableHead>
+                  <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Selling ₹</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredMedicines.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">
                     No results found matching your filters.
                     <Button
                       variant="link"
@@ -653,32 +655,32 @@ export default function Inventory() {
                   return (
                     <TableRow key={medicine.id} className="h-14 table-row-hover group">
                       <TableCell>
-                        <div className="font-medium group-hover:text-primary transition-colors">{medicine.name}</div>
+                        <div className="font-medium text-sm group-hover:text-primary transition-colors">{medicine.name}</div>
                         <div className="text-xs text-muted-foreground">{medicine.manufacturer}</div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{medicine.category}</Badge>
+                      <TableCell className="hidden sm:table-cell">
+                        <Badge variant="outline" className="text-xs">{medicine.category}</Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-2 flex-wrap sm:flex-nowrap">
                           <span className={cn(
-                            "font-semibold",
+                            "font-semibold text-sm",
                             medicine.stock < medicine.minStock && "text-destructive"
                           )}>
                             {medicine.stock}
                           </span>
-                          <Badge variant={stockStatus.variant} className="text-xs">
+                          <Badge variant={stockStatus.variant} className="text-xs shrink-0">
                             {stockStatus.label}
                           </Badge>
                         </div>
                       </TableCell>
-                      <TableCell>{nearestExpiry}</TableCell>
-                      <TableCell>{medicine.rack}</TableCell>
-                      <TableCell className="text-center text-muted-foreground">
+                      <TableCell className="hidden md:table-cell text-sm">{nearestExpiry}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm">{medicine.rack}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-center text-muted-foreground text-sm">
                         {medicine.minStock} / {medicine.maxStock}
                       </TableCell>
-                      <TableCell className="text-right">₹{medicine.purchasePrice}</TableCell>
-                      <TableCell className="text-right font-medium">₹{medicine.sellingPrice}</TableCell>
+                      <TableCell className="text-right font-medium text-sm">₹{medicine.purchasePrice}</TableCell>
+                      <TableCell className="text-right font-medium text-sm">₹{medicine.sellingPrice}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -747,7 +749,8 @@ export default function Inventory() {
               )}
             </TableBody>
           </Table>
-        </Card>
+            </div>
+        </div>
       )}
 
       {/* Add Stock Modal */}

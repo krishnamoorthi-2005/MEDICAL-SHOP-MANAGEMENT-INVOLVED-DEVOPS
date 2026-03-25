@@ -59,7 +59,7 @@ const customerSchema = new mongoose.Schema({
 });
 
 customerSchema.index({ name: 'text', phone: 'text', email: 'text' });
-customerSchema.index({ phone: 1 });
+// Note: phone already has a unique index from the field definition
 customerSchema.index({ isActive: 1 });
 customerSchema.index({ userId: 1, isActive: 1 }); // Compound index for user-scoped queries
 

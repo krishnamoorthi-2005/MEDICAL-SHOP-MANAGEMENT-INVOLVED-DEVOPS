@@ -31,20 +31,28 @@ export default function UserDashboard() {
     const loadPrescriptions = async () => {
         setLoading(true);
         try {
-            // Use email as primary identifier (always stored on login), fallback to phone
-            const userEmail = localStorage.getItem('userEmail') || '';
-            const userPhone = localStorage.getItem('userPhone') || '';
-            const searchParam = userEmail || userPhone;
-            
-            console.log('Loading prescriptions for:', searchParam);
-            
-            if (searchParam) {
+            const candidates = [
+                localStorage.getItem('userEmail') || '',
+                localStorage.getItem('userPhone') || '',
+                localStorage.getItem('lastPrescriptionEmail') || '',
+                localStorage.getItem('lastPrescriptionPhone') || '',
+            ].filter(Boolean);
+
+            const seen = new Set<string>();
+            const merged: PrescriptionRequest[] = [];
+
+            for (const searchParam of candidates) {
+                console.log('Loading prescriptions for:', searchParam);
                 const data = await getMyPrescriptions(searchParam);
-                console.log('Loaded prescriptions:', data);
-                setPrescriptions(data || []);
-            } else {
-                console.warn('No user email or phone found in localStorage');
+                for (const request of data || []) {
+                    if (!seen.has(request._id)) {
+                        seen.add(request._id);
+                        merged.push(request);
+                    }
+                }
             }
+
+            setPrescriptions(merged);
         } catch (error) {
             console.error('Failed to load prescriptions:', error);
         } finally {
@@ -66,54 +74,56 @@ export default function UserDashboard() {
     };
 
     return (
-        <div className="min-h-screen" style={{ background: 'linear-gradient(135deg,#f0f4ff 0%,#faf5ff 50%,#f0fdf4 100%)' }}>
+        <div className="min-h-screen bg-background">
             <div className="max-w-6xl mx-auto px-4 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <p className="text-sm font-medium text-indigo-600 mb-1">{getGreeting()},</p>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2">{userName} 👋</h1>
-                            <p className="text-gray-600">Track and manage your prescription requests</p>
+                            <p className="text-sm font-bold text-primary mb-1">{getGreeting()},</p>
+                            <h1 className="text-3xl font-extrabold text-foreground mb-1 tracking-tight">{userName} 👋</h1>
+                            <p className="text-muted-foreground text-sm">Track and manage your prescription requests</p>
                         </div>
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={loadPrescriptions}
                                 disabled={loading}
-                                className="flex items-center gap-2 px-4 py-3 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border/60 text-foreground font-semibold rounded-xl hover:bg-muted/30 hover:shadow-sm transition-all disabled:opacity-50 text-sm"
                             >
-                                <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
+                                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                                 Refresh
                             </button>
                             <button
                                 onClick={() => navigate('/submit-prescription')}
-                                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg hover:scale-105 transition-all"
+                                className="flex items-center gap-2 px-5 py-2.5 text-white font-bold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all text-sm"
+                                style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', boxShadow: '0 4px 16px rgba(99,102,241,0.3)' }}
                             >
-                                <Plus className="h-5 w-5" />
+                                <Plus className="h-4 w-4" />
                                 New Request
                             </button>
                         </div>
                     </div>
 
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                         {[
-                            { label: 'Total Requests', value: prescriptions.length, color: '#6366f1', icon: ClipboardList },
-                            { label: 'Pending', value: prescriptions.filter(p => p.status === 'pending' || p.status === 'under_review').length, color: '#f59e0b', icon: Clock },
-                            { label: 'Approved', value: prescriptions.filter(p => p.status === 'approved').length, color: '#10b981', icon: CheckCircle },
-                            { label: 'Collected', value: prescriptions.filter(p => p.status === 'collected').length, color: '#64748b', icon: Package },
+                            { label: 'Total Requests', value: prescriptions.length, gradient: 'from-indigo-500 to-violet-600', icon: ClipboardList },
+                            { label: 'Pending', value: prescriptions.filter(p => p.status === 'pending' || p.status === 'under_review').length, gradient: 'from-amber-500 to-orange-600', icon: Clock },
+                            { label: 'Approved', value: prescriptions.filter(p => p.status === 'approved').length, gradient: 'from-emerald-500 to-teal-600', icon: CheckCircle },
+                            { label: 'Collected', value: prescriptions.filter(p => p.status === 'collected').length, gradient: 'from-slate-400 to-slate-500', icon: Package },
                         ].map((stat, i) => (
-                            <div key={i} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-medium text-gray-600">{stat.label}</span>
-                                    <div
-                                        className="h-10 w-10 rounded-lg flex items-center justify-center"
-                                        style={{ backgroundColor: `${stat.color}15` }}
-                                    >
-                                        <stat.icon className="h-5 w-5" style={{ color: stat.color }} />
+                            <div key={i} className={`relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${stat.gradient} text-white`}
+                                style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}>
+                                <div className="absolute -top-3 -right-3 h-16 w-16 rounded-full bg-white/10" />
+                                <div className="relative z-10 flex items-start justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 mb-1">{stat.label}</p>
+                                        <p className="text-2xl font-extrabold text-white">{stat.value}</p>
+                                    </div>
+                                    <div className="p-1.5 rounded-lg bg-white/20">
+                                        <stat.icon className="h-4 w-4 text-white" />
                                     </div>
                                 </div>
-                                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
                             </div>
                         ))}
                     </div>
@@ -165,7 +175,7 @@ export default function UserDashboard() {
                             <ClipboardList className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                             <p className="text-gray-500 mb-2">No prescription requests found</p>
                             <p className="text-xs text-gray-400 mb-4">
-                                Searching for: {localStorage.getItem('userEmail') || localStorage.getItem('userPhone') || 'No identifier found'}
+                                Searching for: {[localStorage.getItem('userEmail'), localStorage.getItem('userPhone'), localStorage.getItem('lastPrescriptionEmail'), localStorage.getItem('lastPrescriptionPhone')].filter(Boolean).join(' • ') || 'No identifier found'}
                             </p>
                             <button
                                 onClick={() => navigate('/submit-prescription')}

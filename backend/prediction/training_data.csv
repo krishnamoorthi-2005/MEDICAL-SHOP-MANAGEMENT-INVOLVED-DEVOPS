@@ -1,1201 +1,445 @@
 medicineId,medicineName,month,quantity,category
-MED001,Alex,1,199,Cold/Cough
-MED001,Alex,2,152,Cold/Cough
-MED001,Alex,3,140,Cold/Cough
-MED001,Alex,4,113,Cold/Cough
-MED001,Alex,5,117,Cold/Cough
-MED001,Alex,6,100,Cold/Cough
-MED001,Alex,7,122,Cold/Cough
-MED001,Alex,8,108,Cold/Cough
-MED001,Alex,9,133,Cold/Cough
-MED001,Alex,10,141,Cold/Cough
-MED001,Alex,11,163,Cold/Cough
-MED001,Alex,12,192,Cold/Cough
-MED002,Dolo 650,1,64,Fever
-MED002,Dolo 650,2,68,Fever
-MED002,Dolo 650,3,72,Fever
-MED002,Dolo 650,4,57,Fever
-MED002,Dolo 650,5,51,Fever
-MED002,Dolo 650,6,51,Fever
-MED002,Dolo 650,7,61,Fever
-MED002,Dolo 650,8,53,Fever
-MED002,Dolo 650,9,68,Fever
-MED002,Dolo 650,10,73,Fever
-MED002,Dolo 650,11,71,Fever
-MED002,Dolo 650,12,67,Fever
-MED003,Cough Syrup,1,55,Cold/Cough
-MED003,Cough Syrup,2,43,Cold/Cough
-MED003,Cough Syrup,3,33,Cold/Cough
-MED003,Cough Syrup,4,27,Cold/Cough
-MED003,Cough Syrup,5,30,Cold/Cough
-MED003,Cough Syrup,6,25,Cold/Cough
-MED003,Cough Syrup,7,30,Cold/Cough
-MED003,Cough Syrup,8,33,Cold/Cough
-MED003,Cough Syrup,9,35,Cold/Cough
-MED003,Cough Syrup,10,47,Cold/Cough
-MED003,Cough Syrup,11,43,Cold/Cough
-MED003,Cough Syrup,12,49,Cold/Cough
-MED004,Omeprazole,1,34,Gastric
-MED004,Omeprazole,2,32,Gastric
-MED004,Omeprazole,3,34,Gastric
-MED004,Omeprazole,4,34,Gastric
-MED004,Omeprazole,5,36,Gastric
-MED004,Omeprazole,6,26,Gastric
-MED004,Omeprazole,7,28,Gastric
-MED004,Omeprazole,8,29,Gastric
-MED004,Omeprazole,9,27,Gastric
-MED004,Omeprazole,10,28,Gastric
-MED004,Omeprazole,11,27,Gastric
-MED004,Omeprazole,12,28,Gastric
-MED005,Loratadine,1,95,Allergy
-MED005,Loratadine,2,99,Allergy
-MED005,Loratadine,3,132,Allergy
-MED005,Loratadine,4,136,Allergy
-MED005,Loratadine,5,128,Allergy
-MED005,Loratadine,6,130,Allergy
-MED005,Loratadine,7,120,Allergy
-MED005,Loratadine,8,130,Allergy
-MED005,Loratadine,9,124,Allergy
-MED005,Loratadine,10,135,Allergy
-MED005,Loratadine,11,93,Allergy
-MED005,Loratadine,12,88,Allergy
-MED006,Cough Syrup,1,142,Cold/Cough
-MED006,Cough Syrup,2,120,Cold/Cough
-MED006,Cough Syrup,3,99,Cold/Cough
-MED006,Cough Syrup,4,84,Cold/Cough
-MED006,Cough Syrup,5,78,Cold/Cough
-MED006,Cough Syrup,6,67,Cold/Cough
-MED006,Cough Syrup,7,65,Cold/Cough
-MED006,Cough Syrup,8,68,Cold/Cough
-MED006,Cough Syrup,9,84,Cold/Cough
-MED006,Cough Syrup,10,99,Cold/Cough
-MED006,Cough Syrup,11,105,Cold/Cough
-MED006,Cough Syrup,12,141,Cold/Cough
-MED007,Dolo 650,1,74,Fever
-MED007,Dolo 650,2,63,Fever
-MED007,Dolo 650,3,64,Fever
-MED007,Dolo 650,4,48,Fever
-MED007,Dolo 650,5,56,Fever
-MED007,Dolo 650,6,44,Fever
-MED007,Dolo 650,7,46,Fever
-MED007,Dolo 650,8,51,Fever
-MED007,Dolo 650,9,57,Fever
-MED007,Dolo 650,10,57,Fever
-MED007,Dolo 650,11,68,Fever
-MED007,Dolo 650,12,75,Fever
-MED008,Paracetamol,1,131,Fever
-MED008,Paracetamol,2,124,Fever
-MED008,Paracetamol,3,142,Fever
-MED008,Paracetamol,4,101,Fever
-MED008,Paracetamol,5,89,Fever
-MED008,Paracetamol,6,78,Fever
-MED008,Paracetamol,7,89,Fever
-MED008,Paracetamol,8,117,Fever
-MED008,Paracetamol,9,122,Fever
-MED008,Paracetamol,10,121,Fever
-MED008,Paracetamol,11,117,Fever
-MED008,Paracetamol,12,130,Fever
-MED009,Cetirizine,1,128,Allergy
-MED009,Cetirizine,2,127,Allergy
-MED009,Cetirizine,3,191,Allergy
-MED009,Cetirizine,4,201,Allergy
-MED009,Cetirizine,5,143,Allergy
-MED009,Cetirizine,6,149,Allergy
-MED009,Cetirizine,7,147,Allergy
-MED009,Cetirizine,8,155,Allergy
-MED009,Cetirizine,9,156,Allergy
-MED009,Cetirizine,10,160,Allergy
-MED009,Cetirizine,11,111,Allergy
-MED009,Cetirizine,12,109,Allergy
-MED010,Dolo 650,1,104,Fever
-MED010,Dolo 650,2,119,Fever
-MED010,Dolo 650,3,107,Fever
-MED010,Dolo 650,4,73,Fever
-MED010,Dolo 650,5,79,Fever
-MED010,Dolo 650,6,63,Fever
-MED010,Dolo 650,7,89,Fever
-MED010,Dolo 650,8,97,Fever
-MED010,Dolo 650,9,82,Fever
-MED010,Dolo 650,10,100,Fever
-MED010,Dolo 650,11,109,Fever
-MED010,Dolo 650,12,94,Fever
-MED011,Naproxen,1,90,Painkiller
-MED011,Naproxen,2,84,Painkiller
-MED011,Naproxen,3,91,Painkiller
-MED011,Naproxen,4,84,Painkiller
-MED011,Naproxen,5,71,Painkiller
-MED011,Naproxen,6,79,Painkiller
-MED011,Naproxen,7,71,Painkiller
-MED011,Naproxen,8,94,Painkiller
-MED011,Naproxen,9,93,Painkiller
-MED011,Naproxen,10,92,Painkiller
-MED011,Naproxen,11,79,Painkiller
-MED011,Naproxen,12,72,Painkiller
-MED012,Naproxen,1,132,Painkiller
-MED012,Naproxen,2,134,Painkiller
-MED012,Naproxen,3,104,Painkiller
-MED012,Naproxen,4,118,Painkiller
-MED012,Naproxen,5,103,Painkiller
-MED012,Naproxen,6,128,Painkiller
-MED012,Naproxen,7,128,Painkiller
-MED012,Naproxen,8,105,Painkiller
-MED012,Naproxen,9,118,Painkiller
-MED012,Naproxen,10,120,Painkiller
-MED012,Naproxen,11,110,Painkiller
-MED012,Naproxen,12,132,Painkiller
-MED013,Alex,1,41,Cold/Cough
-MED013,Alex,2,35,Cold/Cough
-MED013,Alex,3,33,Cold/Cough
-MED013,Alex,4,28,Cold/Cough
-MED013,Alex,5,21,Cold/Cough
-MED013,Alex,6,19,Cold/Cough
-MED013,Alex,7,27,Cold/Cough
-MED013,Alex,8,28,Cold/Cough
-MED013,Alex,9,29,Cold/Cough
-MED013,Alex,10,36,Cold/Cough
-MED013,Alex,11,34,Cold/Cough
-MED013,Alex,12,38,Cold/Cough
-MED014,Glimepiride,1,36,Diabetes
-MED014,Glimepiride,2,39,Diabetes
-MED014,Glimepiride,3,34,Diabetes
-MED014,Glimepiride,4,34,Diabetes
-MED014,Glimepiride,5,33,Diabetes
-MED014,Glimepiride,6,39,Diabetes
-MED014,Glimepiride,7,34,Diabetes
-MED014,Glimepiride,8,42,Diabetes
-MED014,Glimepiride,9,42,Diabetes
-MED014,Glimepiride,10,33,Diabetes
-MED014,Glimepiride,11,35,Diabetes
-MED014,Glimepiride,12,39,Diabetes
-MED015,Alex,1,83,Cold/Cough
-MED015,Alex,2,75,Cold/Cough
-MED015,Alex,3,80,Cold/Cough
-MED015,Alex,4,59,Cold/Cough
-MED015,Alex,5,51,Cold/Cough
-MED015,Alex,6,49,Cold/Cough
-MED015,Alex,7,56,Cold/Cough
-MED015,Alex,8,53,Cold/Cough
-MED015,Alex,9,57,Cold/Cough
-MED015,Alex,10,76,Cold/Cough
-MED015,Alex,11,82,Cold/Cough
-MED015,Alex,12,90,Cold/Cough
-MED016,Paracetamol,1,138,Fever
-MED016,Paracetamol,2,136,Fever
-MED016,Paracetamol,3,136,Fever
-MED016,Paracetamol,4,85,Fever
-MED016,Paracetamol,5,94,Fever
-MED016,Paracetamol,6,82,Fever
-MED016,Paracetamol,7,107,Fever
-MED016,Paracetamol,8,99,Fever
-MED016,Paracetamol,9,97,Fever
-MED016,Paracetamol,10,116,Fever
-MED016,Paracetamol,11,126,Fever
-MED016,Paracetamol,12,120,Fever
-MED017,Naproxen,1,117,Painkiller
-MED017,Naproxen,2,143,Painkiller
-MED017,Naproxen,3,124,Painkiller
-MED017,Naproxen,4,140,Painkiller
-MED017,Naproxen,5,128,Painkiller
-MED017,Naproxen,6,109,Painkiller
-MED017,Naproxen,7,146,Painkiller
-MED017,Naproxen,8,139,Painkiller
-MED017,Naproxen,9,144,Painkiller
-MED017,Naproxen,10,143,Painkiller
-MED017,Naproxen,11,140,Painkiller
-MED017,Naproxen,12,114,Painkiller
-MED018,Loratadine,1,70,Allergy
-MED018,Loratadine,2,72,Allergy
-MED018,Loratadine,3,102,Allergy
-MED018,Loratadine,4,99,Allergy
-MED018,Loratadine,5,101,Allergy
-MED018,Loratadine,6,100,Allergy
-MED018,Loratadine,7,81,Allergy
-MED018,Loratadine,8,105,Allergy
-MED018,Loratadine,9,104,Allergy
-MED018,Loratadine,10,94,Allergy
-MED018,Loratadine,11,90,Allergy
-MED018,Loratadine,12,80,Allergy
-MED019,Azithromycin,1,81,Antibiotic
-MED019,Azithromycin,2,85,Antibiotic
-MED019,Azithromycin,3,71,Antibiotic
-MED019,Azithromycin,4,75,Antibiotic
-MED019,Azithromycin,5,91,Antibiotic
-MED019,Azithromycin,6,81,Antibiotic
-MED019,Azithromycin,7,81,Antibiotic
-MED019,Azithromycin,8,85,Antibiotic
-MED019,Azithromycin,9,69,Antibiotic
-MED019,Azithromycin,10,82,Antibiotic
-MED019,Azithromycin,11,80,Antibiotic
-MED019,Azithromycin,12,88,Antibiotic
-MED020,Pantoprazole,1,77,Gastric
-MED020,Pantoprazole,2,97,Gastric
-MED020,Pantoprazole,3,75,Gastric
-MED020,Pantoprazole,4,85,Gastric
-MED020,Pantoprazole,5,97,Gastric
-MED020,Pantoprazole,6,90,Gastric
-MED020,Pantoprazole,7,79,Gastric
-MED020,Pantoprazole,8,76,Gastric
-MED020,Pantoprazole,9,96,Gastric
-MED020,Pantoprazole,10,79,Gastric
-MED020,Pantoprazole,11,88,Gastric
-MED020,Pantoprazole,12,89,Gastric
-MED021,Glimepiride,1,88,Diabetes
-MED021,Glimepiride,2,93,Diabetes
-MED021,Glimepiride,3,91,Diabetes
-MED021,Glimepiride,4,102,Diabetes
-MED021,Glimepiride,5,82,Diabetes
-MED021,Glimepiride,6,96,Diabetes
-MED021,Glimepiride,7,83,Diabetes
-MED021,Glimepiride,8,88,Diabetes
-MED021,Glimepiride,9,95,Diabetes
-MED021,Glimepiride,10,85,Diabetes
-MED021,Glimepiride,11,85,Diabetes
-MED021,Glimepiride,12,97,Diabetes
-MED022,Omeprazole,1,40,Gastric
-MED022,Omeprazole,2,45,Gastric
-MED022,Omeprazole,3,52,Gastric
-MED022,Omeprazole,4,58,Gastric
-MED022,Omeprazole,5,44,Gastric
-MED022,Omeprazole,6,42,Gastric
-MED022,Omeprazole,7,42,Gastric
-MED022,Omeprazole,8,51,Gastric
-MED022,Omeprazole,9,51,Gastric
-MED022,Omeprazole,10,51,Gastric
-MED022,Omeprazole,11,44,Gastric
-MED022,Omeprazole,12,41,Gastric
-MED023,Naproxen,1,117,Painkiller
-MED023,Naproxen,2,113,Painkiller
-MED023,Naproxen,3,110,Painkiller
-MED023,Naproxen,4,122,Painkiller
-MED023,Naproxen,5,111,Painkiller
-MED023,Naproxen,6,91,Painkiller
-MED023,Naproxen,7,117,Painkiller
-MED023,Naproxen,8,100,Painkiller
-MED023,Naproxen,9,112,Painkiller
-MED023,Naproxen,10,121,Painkiller
-MED023,Naproxen,11,95,Painkiller
-MED023,Naproxen,12,94,Painkiller
-MED024,Diclofenac,1,53,Painkiller
-MED024,Diclofenac,2,61,Painkiller
-MED024,Diclofenac,3,56,Painkiller
-MED024,Diclofenac,4,62,Painkiller
-MED024,Diclofenac,5,64,Painkiller
-MED024,Diclofenac,6,55,Painkiller
-MED024,Diclofenac,7,63,Painkiller
-MED024,Diclofenac,8,56,Painkiller
-MED024,Diclofenac,9,60,Painkiller
-MED024,Diclofenac,10,68,Painkiller
-MED024,Diclofenac,11,67,Painkiller
-MED024,Diclofenac,12,53,Painkiller
-MED025,Azithromycin,1,63,Antibiotic
-MED025,Azithromycin,2,60,Antibiotic
-MED025,Azithromycin,3,55,Antibiotic
-MED025,Azithromycin,4,70,Antibiotic
-MED025,Azithromycin,5,67,Antibiotic
-MED025,Azithromycin,6,60,Antibiotic
-MED025,Azithromycin,7,69,Antibiotic
-MED025,Azithromycin,8,66,Antibiotic
-MED025,Azithromycin,9,63,Antibiotic
-MED025,Azithromycin,10,55,Antibiotic
-MED025,Azithromycin,11,56,Antibiotic
-MED025,Azithromycin,12,72,Antibiotic
-MED026,Paracetamol,1,141,Fever
-MED026,Paracetamol,2,127,Fever
-MED026,Paracetamol,3,127,Fever
-MED026,Paracetamol,4,96,Fever
-MED026,Paracetamol,5,84,Fever
-MED026,Paracetamol,6,74,Fever
-MED026,Paracetamol,7,89,Fever
-MED026,Paracetamol,8,117,Fever
-MED026,Paracetamol,9,114,Fever
-MED026,Paracetamol,10,127,Fever
-MED026,Paracetamol,11,141,Fever
-MED026,Paracetamol,12,115,Fever
-MED027,Cough Syrup,1,183,Cold/Cough
-MED027,Cough Syrup,2,162,Cold/Cough
-MED027,Cough Syrup,3,169,Cold/Cough
-MED027,Cough Syrup,4,142,Cold/Cough
-MED027,Cough Syrup,5,110,Cold/Cough
-MED027,Cough Syrup,6,102,Cold/Cough
-MED027,Cough Syrup,7,101,Cold/Cough
-MED027,Cough Syrup,8,144,Cold/Cough
-MED027,Cough Syrup,9,157,Cold/Cough
-MED027,Cough Syrup,10,194,Cold/Cough
-MED027,Cough Syrup,11,201,Cold/Cough
-MED027,Cough Syrup,12,221,Cold/Cough
-MED028,Alex,1,157,Cold/Cough
-MED028,Alex,2,182,Cold/Cough
-MED028,Alex,3,136,Cold/Cough
-MED028,Alex,4,133,Cold/Cough
-MED028,Alex,5,114,Cold/Cough
-MED028,Alex,6,101,Cold/Cough
-MED028,Alex,7,114,Cold/Cough
-MED028,Alex,8,109,Cold/Cough
-MED028,Alex,9,142,Cold/Cough
-MED028,Alex,10,138,Cold/Cough
-MED028,Alex,11,189,Cold/Cough
-MED028,Alex,12,203,Cold/Cough
-MED029,Ranitidine,1,79,Gastric
-MED029,Ranitidine,2,95,Gastric
-MED029,Ranitidine,3,85,Gastric
-MED029,Ranitidine,4,90,Gastric
-MED029,Ranitidine,5,104,Gastric
-MED029,Ranitidine,6,79,Gastric
-MED029,Ranitidine,7,74,Gastric
-MED029,Ranitidine,8,78,Gastric
-MED029,Ranitidine,9,82,Gastric
-MED029,Ranitidine,10,96,Gastric
-MED029,Ranitidine,11,99,Gastric
-MED029,Ranitidine,12,81,Gastric
-MED030,Cough Syrup,1,214,Cold/Cough
-MED030,Cough Syrup,2,185,Cold/Cough
-MED030,Cough Syrup,3,185,Cold/Cough
-MED030,Cough Syrup,4,133,Cold/Cough
-MED030,Cough Syrup,5,133,Cold/Cough
-MED030,Cough Syrup,6,91,Cold/Cough
-MED030,Cough Syrup,7,134,Cold/Cough
-MED030,Cough Syrup,8,119,Cold/Cough
-MED030,Cough Syrup,9,167,Cold/Cough
-MED030,Cough Syrup,10,163,Cold/Cough
-MED030,Cough Syrup,11,168,Cold/Cough
-MED030,Cough Syrup,12,201,Cold/Cough
-MED031,Amoxicillin,1,100,Antibiotic
-MED031,Amoxicillin,2,88,Antibiotic
-MED031,Amoxicillin,3,96,Antibiotic
-MED031,Amoxicillin,4,94,Antibiotic
-MED031,Amoxicillin,5,90,Antibiotic
-MED031,Amoxicillin,6,96,Antibiotic
-MED031,Amoxicillin,7,87,Antibiotic
-MED031,Amoxicillin,8,99,Antibiotic
-MED031,Amoxicillin,9,79,Antibiotic
-MED031,Amoxicillin,10,106,Antibiotic
-MED031,Amoxicillin,11,95,Antibiotic
-MED031,Amoxicillin,12,100,Antibiotic
-MED032,Alex,1,97,Cold/Cough
-MED032,Alex,2,88,Cold/Cough
-MED032,Alex,3,68,Cold/Cough
-MED032,Alex,4,50,Cold/Cough
-MED032,Alex,5,54,Cold/Cough
-MED032,Alex,6,43,Cold/Cough
-MED032,Alex,7,49,Cold/Cough
-MED032,Alex,8,64,Cold/Cough
-MED032,Alex,9,69,Cold/Cough
-MED032,Alex,10,73,Cold/Cough
-MED032,Alex,11,79,Cold/Cough
-MED032,Alex,12,88,Cold/Cough
-MED033,Ranitidine,1,59,Gastric
-MED033,Ranitidine,2,57,Gastric
-MED033,Ranitidine,3,54,Gastric
-MED033,Ranitidine,4,65,Gastric
-MED033,Ranitidine,5,75,Gastric
-MED033,Ranitidine,6,64,Gastric
-MED033,Ranitidine,7,68,Gastric
-MED033,Ranitidine,8,63,Gastric
-MED033,Ranitidine,9,57,Gastric
-MED033,Ranitidine,10,61,Gastric
-MED033,Ranitidine,11,51,Gastric
-MED033,Ranitidine,12,57,Gastric
-MED034,Ranitidine,1,104,Gastric
-MED034,Ranitidine,2,109,Gastric
-MED034,Ranitidine,3,111,Gastric
-MED034,Ranitidine,4,116,Gastric
-MED034,Ranitidine,5,115,Gastric
-MED034,Ranitidine,6,97,Gastric
-MED034,Ranitidine,7,106,Gastric
-MED034,Ranitidine,8,119,Gastric
-MED034,Ranitidine,9,116,Gastric
-MED034,Ranitidine,10,96,Gastric
-MED034,Ranitidine,11,93,Gastric
-MED034,Ranitidine,12,107,Gastric
-MED035,Dolo 650,1,84,Fever
-MED035,Dolo 650,2,77,Fever
-MED035,Dolo 650,3,81,Fever
-MED035,Dolo 650,4,65,Fever
-MED035,Dolo 650,5,64,Fever
-MED035,Dolo 650,6,49,Fever
-MED035,Dolo 650,7,55,Fever
-MED035,Dolo 650,8,58,Fever
-MED035,Dolo 650,9,62,Fever
-MED035,Dolo 650,10,74,Fever
-MED035,Dolo 650,11,90,Fever
-MED035,Dolo 650,12,71,Fever
-MED036,Metformin,1,93,Diabetes
-MED036,Metformin,2,99,Diabetes
-MED036,Metformin,3,87,Diabetes
-MED036,Metformin,4,101,Diabetes
-MED036,Metformin,5,95,Diabetes
-MED036,Metformin,6,88,Diabetes
-MED036,Metformin,7,100,Diabetes
-MED036,Metformin,8,81,Diabetes
-MED036,Metformin,9,103,Diabetes
-MED036,Metformin,10,103,Diabetes
-MED036,Metformin,11,84,Diabetes
-MED036,Metformin,12,93,Diabetes
-MED037,Glimepiride,1,134,Diabetes
-MED037,Glimepiride,2,169,Diabetes
-MED037,Glimepiride,3,149,Diabetes
-MED037,Glimepiride,4,128,Diabetes
-MED037,Glimepiride,5,137,Diabetes
-MED037,Glimepiride,6,164,Diabetes
-MED037,Glimepiride,7,147,Diabetes
-MED037,Glimepiride,8,162,Diabetes
-MED037,Glimepiride,9,156,Diabetes
-MED037,Glimepiride,10,170,Diabetes
-MED037,Glimepiride,11,153,Diabetes
-MED037,Glimepiride,12,169,Diabetes
-MED038,Aceclofenac,1,81,Painkiller
-MED038,Aceclofenac,2,75,Painkiller
-MED038,Aceclofenac,3,77,Painkiller
-MED038,Aceclofenac,4,73,Painkiller
-MED038,Aceclofenac,5,80,Painkiller
-MED038,Aceclofenac,6,74,Painkiller
-MED038,Aceclofenac,7,81,Painkiller
-MED038,Aceclofenac,8,78,Painkiller
-MED038,Aceclofenac,9,72,Painkiller
-MED038,Aceclofenac,10,67,Painkiller
-MED038,Aceclofenac,11,67,Painkiller
-MED038,Aceclofenac,12,76,Painkiller
-MED039,Omeprazole,1,95,Gastric
-MED039,Omeprazole,2,88,Gastric
-MED039,Omeprazole,3,91,Gastric
-MED039,Omeprazole,4,90,Gastric
-MED039,Omeprazole,5,84,Gastric
-MED039,Omeprazole,6,82,Gastric
-MED039,Omeprazole,7,81,Gastric
-MED039,Omeprazole,8,83,Gastric
-MED039,Omeprazole,9,89,Gastric
-MED039,Omeprazole,10,78,Gastric
-MED039,Omeprazole,11,80,Gastric
-MED039,Omeprazole,12,93,Gastric
-MED040,Dolo 650,1,169,Fever
-MED040,Dolo 650,2,138,Fever
-MED040,Dolo 650,3,142,Fever
-MED040,Dolo 650,4,121,Fever
-MED040,Dolo 650,5,116,Fever
-MED040,Dolo 650,6,97,Fever
-MED040,Dolo 650,7,116,Fever
-MED040,Dolo 650,8,149,Fever
-MED040,Dolo 650,9,136,Fever
-MED040,Dolo 650,10,154,Fever
-MED040,Dolo 650,11,176,Fever
-MED040,Dolo 650,12,172,Fever
-MED041,Metformin,1,120,Diabetes
-MED041,Metformin,2,106,Diabetes
-MED041,Metformin,3,119,Diabetes
-MED041,Metformin,4,134,Diabetes
-MED041,Metformin,5,138,Diabetes
-MED041,Metformin,6,142,Diabetes
-MED041,Metformin,7,121,Diabetes
-MED041,Metformin,8,134,Diabetes
-MED041,Metformin,9,126,Diabetes
-MED041,Metformin,10,128,Diabetes
-MED041,Metformin,11,114,Diabetes
-MED041,Metformin,12,114,Diabetes
-MED042,Cetirizine,1,75,Allergy
-MED042,Cetirizine,2,74,Allergy
-MED042,Cetirizine,3,109,Allergy
-MED042,Cetirizine,4,131,Allergy
-MED042,Cetirizine,5,111,Allergy
-MED042,Cetirizine,6,86,Allergy
-MED042,Cetirizine,7,95,Allergy
-MED042,Cetirizine,8,93,Allergy
-MED042,Cetirizine,9,119,Allergy
-MED042,Cetirizine,10,90,Allergy
-MED042,Cetirizine,11,83,Allergy
-MED042,Cetirizine,12,78,Allergy
-MED043,Ascoril,1,127,Cold/Cough
-MED043,Ascoril,2,143,Cold/Cough
-MED043,Ascoril,3,103,Cold/Cough
-MED043,Ascoril,4,94,Cold/Cough
-MED043,Ascoril,5,73,Cold/Cough
-MED043,Ascoril,6,71,Cold/Cough
-MED043,Ascoril,7,77,Cold/Cough
-MED043,Ascoril,8,90,Cold/Cough
-MED043,Ascoril,9,114,Cold/Cough
-MED043,Ascoril,10,122,Cold/Cough
-MED043,Ascoril,11,148,Cold/Cough
-MED043,Ascoril,12,163,Cold/Cough
-MED044,Ascoril,1,108,Cold/Cough
-MED044,Ascoril,2,95,Cold/Cough
-MED044,Ascoril,3,79,Cold/Cough
-MED044,Ascoril,4,76,Cold/Cough
-MED044,Ascoril,5,77,Cold/Cough
-MED044,Ascoril,6,56,Cold/Cough
-MED044,Ascoril,7,70,Cold/Cough
-MED044,Ascoril,8,81,Cold/Cough
-MED044,Ascoril,9,87,Cold/Cough
-MED044,Ascoril,10,108,Cold/Cough
-MED044,Ascoril,11,123,Cold/Cough
-MED044,Ascoril,12,106,Cold/Cough
-MED045,Diclofenac,1,70,Painkiller
-MED045,Diclofenac,2,73,Painkiller
-MED045,Diclofenac,3,72,Painkiller
-MED045,Diclofenac,4,86,Painkiller
-MED045,Diclofenac,5,83,Painkiller
-MED045,Diclofenac,6,75,Painkiller
-MED045,Diclofenac,7,86,Painkiller
-MED045,Diclofenac,8,88,Painkiller
-MED045,Diclofenac,9,73,Painkiller
-MED045,Diclofenac,10,84,Painkiller
-MED045,Diclofenac,11,88,Painkiller
-MED045,Diclofenac,12,72,Painkiller
-MED046,Aceclofenac,1,89,Painkiller
-MED046,Aceclofenac,2,93,Painkiller
-MED046,Aceclofenac,3,72,Painkiller
-MED046,Aceclofenac,4,70,Painkiller
-MED046,Aceclofenac,5,77,Painkiller
-MED046,Aceclofenac,6,86,Painkiller
-MED046,Aceclofenac,7,93,Painkiller
-MED046,Aceclofenac,8,79,Painkiller
-MED046,Aceclofenac,9,87,Painkiller
-MED046,Aceclofenac,10,71,Painkiller
-MED046,Aceclofenac,11,86,Painkiller
-MED046,Aceclofenac,12,85,Painkiller
-MED047,Cough Syrup,1,85,Cold/Cough
-MED047,Cough Syrup,2,97,Cold/Cough
-MED047,Cough Syrup,3,83,Cold/Cough
-MED047,Cough Syrup,4,63,Cold/Cough
-MED047,Cough Syrup,5,48,Cold/Cough
-MED047,Cough Syrup,6,55,Cold/Cough
-MED047,Cough Syrup,7,59,Cold/Cough
-MED047,Cough Syrup,8,59,Cold/Cough
-MED047,Cough Syrup,9,67,Cold/Cough
-MED047,Cough Syrup,10,79,Cold/Cough
-MED047,Cough Syrup,11,89,Cold/Cough
-MED047,Cough Syrup,12,91,Cold/Cough
-MED048,Azithromycin,1,70,Antibiotic
-MED048,Azithromycin,2,70,Antibiotic
-MED048,Azithromycin,3,56,Antibiotic
-MED048,Azithromycin,4,72,Antibiotic
-MED048,Azithromycin,5,66,Antibiotic
-MED048,Azithromycin,6,70,Antibiotic
-MED048,Azithromycin,7,67,Antibiotic
-MED048,Azithromycin,8,62,Antibiotic
-MED048,Azithromycin,9,68,Antibiotic
-MED048,Azithromycin,10,72,Antibiotic
-MED048,Azithromycin,11,59,Antibiotic
-MED048,Azithromycin,12,69,Antibiotic
-MED049,Paracetamol,1,93,Fever
-MED049,Paracetamol,2,91,Fever
-MED049,Paracetamol,3,83,Fever
-MED049,Paracetamol,4,74,Fever
-MED049,Paracetamol,5,64,Fever
-MED049,Paracetamol,6,68,Fever
-MED049,Paracetamol,7,76,Fever
-MED049,Paracetamol,8,67,Fever
-MED049,Paracetamol,9,85,Fever
-MED049,Paracetamol,10,78,Fever
-MED049,Paracetamol,11,91,Fever
-MED049,Paracetamol,12,95,Fever
-MED050,Glimepiride,1,144,Diabetes
-MED050,Glimepiride,2,128,Diabetes
-MED050,Glimepiride,3,165,Diabetes
-MED050,Glimepiride,4,135,Diabetes
-MED050,Glimepiride,5,137,Diabetes
-MED050,Glimepiride,6,163,Diabetes
-MED050,Glimepiride,7,142,Diabetes
-MED050,Glimepiride,8,167,Diabetes
-MED050,Glimepiride,9,159,Diabetes
-MED050,Glimepiride,10,139,Diabetes
-MED050,Glimepiride,11,127,Diabetes
-MED050,Glimepiride,12,170,Diabetes
-MED051,Diclofenac,1,42,Painkiller
-MED051,Diclofenac,2,52,Painkiller
-MED051,Diclofenac,3,48,Painkiller
-MED051,Diclofenac,4,52,Painkiller
-MED051,Diclofenac,5,51,Painkiller
-MED051,Diclofenac,6,51,Painkiller
-MED051,Diclofenac,7,48,Painkiller
-MED051,Diclofenac,8,53,Painkiller
-MED051,Diclofenac,9,43,Painkiller
-MED051,Diclofenac,10,44,Painkiller
-MED051,Diclofenac,11,51,Painkiller
-MED051,Diclofenac,12,46,Painkiller
-MED052,Cefixime,1,104,Antibiotic
-MED052,Cefixime,2,101,Antibiotic
-MED052,Cefixime,3,102,Antibiotic
-MED052,Cefixime,4,99,Antibiotic
-MED052,Cefixime,5,109,Antibiotic
-MED052,Cefixime,6,96,Antibiotic
-MED052,Cefixime,7,108,Antibiotic
-MED052,Cefixime,8,94,Antibiotic
-MED052,Cefixime,9,94,Antibiotic
-MED052,Cefixime,10,90,Antibiotic
-MED052,Cefixime,11,92,Antibiotic
-MED052,Cefixime,12,90,Antibiotic
-MED053,Amoxicillin,1,85,Antibiotic
-MED053,Amoxicillin,2,91,Antibiotic
-MED053,Amoxicillin,3,76,Antibiotic
-MED053,Amoxicillin,4,77,Antibiotic
-MED053,Amoxicillin,5,84,Antibiotic
-MED053,Amoxicillin,6,90,Antibiotic
-MED053,Amoxicillin,7,97,Antibiotic
-MED053,Amoxicillin,8,85,Antibiotic
-MED053,Amoxicillin,9,79,Antibiotic
-MED053,Amoxicillin,10,74,Antibiotic
-MED053,Amoxicillin,11,77,Antibiotic
-MED053,Amoxicillin,12,78,Antibiotic
-MED054,Diclofenac,1,121,Painkiller
-MED054,Diclofenac,2,114,Painkiller
-MED054,Diclofenac,3,135,Painkiller
-MED054,Diclofenac,4,124,Painkiller
-MED054,Diclofenac,5,153,Painkiller
-MED054,Diclofenac,6,136,Painkiller
-MED054,Diclofenac,7,141,Painkiller
-MED054,Diclofenac,8,118,Painkiller
-MED054,Diclofenac,9,148,Painkiller
-MED054,Diclofenac,10,133,Painkiller
-MED054,Diclofenac,11,148,Painkiller
-MED054,Diclofenac,12,136,Painkiller
-MED055,Omeprazole,1,141,Gastric
-MED055,Omeprazole,2,140,Gastric
-MED055,Omeprazole,3,129,Gastric
-MED055,Omeprazole,4,136,Gastric
-MED055,Omeprazole,5,178,Gastric
-MED055,Omeprazole,6,142,Gastric
-MED055,Omeprazole,7,156,Gastric
-MED055,Omeprazole,8,138,Gastric
-MED055,Omeprazole,9,124,Gastric
-MED055,Omeprazole,10,148,Gastric
-MED055,Omeprazole,11,123,Gastric
-MED055,Omeprazole,12,127,Gastric
-MED056,Pantoprazole,1,100,Gastric
-MED056,Pantoprazole,2,93,Gastric
-MED056,Pantoprazole,3,113,Gastric
-MED056,Pantoprazole,4,96,Gastric
-MED056,Pantoprazole,5,117,Gastric
-MED056,Pantoprazole,6,102,Gastric
-MED056,Pantoprazole,7,107,Gastric
-MED056,Pantoprazole,8,90,Gastric
-MED056,Pantoprazole,9,99,Gastric
-MED056,Pantoprazole,10,97,Gastric
-MED056,Pantoprazole,11,97,Gastric
-MED056,Pantoprazole,12,109,Gastric
-MED057,Glimepiride,1,142,Diabetes
-MED057,Glimepiride,2,116,Diabetes
-MED057,Glimepiride,3,128,Diabetes
-MED057,Glimepiride,4,128,Diabetes
-MED057,Glimepiride,5,132,Diabetes
-MED057,Glimepiride,6,140,Diabetes
-MED057,Glimepiride,7,113,Diabetes
-MED057,Glimepiride,8,113,Diabetes
-MED057,Glimepiride,9,129,Diabetes
-MED057,Glimepiride,10,111,Diabetes
-MED057,Glimepiride,11,111,Diabetes
-MED057,Glimepiride,12,108,Diabetes
-MED058,Azithromycin,1,57,Antibiotic
-MED058,Azithromycin,2,66,Antibiotic
-MED058,Azithromycin,3,69,Antibiotic
-MED058,Azithromycin,4,63,Antibiotic
-MED058,Azithromycin,5,62,Antibiotic
-MED058,Azithromycin,6,72,Antibiotic
-MED058,Azithromycin,7,72,Antibiotic
-MED058,Azithromycin,8,67,Antibiotic
-MED058,Azithromycin,9,71,Antibiotic
-MED058,Azithromycin,10,76,Antibiotic
-MED058,Azithromycin,11,73,Antibiotic
-MED058,Azithromycin,12,70,Antibiotic
-MED059,Metformin,1,136,Diabetes
-MED059,Metformin,2,146,Diabetes
-MED059,Metformin,3,127,Diabetes
-MED059,Metformin,4,131,Diabetes
-MED059,Metformin,5,135,Diabetes
-MED059,Metformin,6,145,Diabetes
-MED059,Metformin,7,142,Diabetes
-MED059,Metformin,8,113,Diabetes
-MED059,Metformin,9,116,Diabetes
-MED059,Metformin,10,122,Diabetes
-MED059,Metformin,11,139,Diabetes
-MED059,Metformin,12,132,Diabetes
-MED060,Azithromycin,1,114,Antibiotic
-MED060,Azithromycin,2,108,Antibiotic
-MED060,Azithromycin,3,128,Antibiotic
-MED060,Azithromycin,4,129,Antibiotic
-MED060,Azithromycin,5,138,Antibiotic
-MED060,Azithromycin,6,122,Antibiotic
-MED060,Azithromycin,7,121,Antibiotic
-MED060,Azithromycin,8,106,Antibiotic
-MED060,Azithromycin,9,105,Antibiotic
-MED060,Azithromycin,10,119,Antibiotic
-MED060,Azithromycin,11,115,Antibiotic
-MED060,Azithromycin,12,112,Antibiotic
-MED061,Alex,1,41,Cold/Cough
-MED061,Alex,2,50,Cold/Cough
-MED061,Alex,3,41,Cold/Cough
-MED061,Alex,4,31,Cold/Cough
-MED061,Alex,5,30,Cold/Cough
-MED061,Alex,6,27,Cold/Cough
-MED061,Alex,7,28,Cold/Cough
-MED061,Alex,8,28,Cold/Cough
-MED061,Alex,9,29,Cold/Cough
-MED061,Alex,10,43,Cold/Cough
-MED061,Alex,11,43,Cold/Cough
-MED061,Alex,12,49,Cold/Cough
-MED062,Amoxicillin,1,103,Antibiotic
-MED062,Amoxicillin,2,83,Antibiotic
-MED062,Amoxicillin,3,94,Antibiotic
-MED062,Amoxicillin,4,95,Antibiotic
-MED062,Amoxicillin,5,91,Antibiotic
-MED062,Amoxicillin,6,80,Antibiotic
-MED062,Amoxicillin,7,87,Antibiotic
-MED062,Amoxicillin,8,87,Antibiotic
-MED062,Amoxicillin,9,96,Antibiotic
-MED062,Amoxicillin,10,101,Antibiotic
-MED062,Amoxicillin,11,87,Antibiotic
-MED062,Amoxicillin,12,97,Antibiotic
-MED063,Paracetamol,1,133,Fever
-MED063,Paracetamol,2,161,Fever
-MED063,Paracetamol,3,143,Fever
-MED063,Paracetamol,4,108,Fever
-MED063,Paracetamol,5,105,Fever
-MED063,Paracetamol,6,89,Fever
-MED063,Paracetamol,7,101,Fever
-MED063,Paracetamol,8,135,Fever
-MED063,Paracetamol,9,115,Fever
-MED063,Paracetamol,10,131,Fever
-MED063,Paracetamol,11,163,Fever
-MED063,Paracetamol,12,149,Fever
-MED064,Paracetamol,1,144,Fever
-MED064,Paracetamol,2,139,Fever
-MED064,Paracetamol,3,118,Fever
-MED064,Paracetamol,4,102,Fever
-MED064,Paracetamol,5,115,Fever
-MED064,Paracetamol,6,98,Fever
-MED064,Paracetamol,7,115,Fever
-MED064,Paracetamol,8,108,Fever
-MED064,Paracetamol,9,120,Fever
-MED064,Paracetamol,10,147,Fever
-MED064,Paracetamol,11,140,Fever
-MED064,Paracetamol,12,151,Fever
-MED065,Aceclofenac,1,47,Painkiller
-MED065,Aceclofenac,2,61,Painkiller
-MED065,Aceclofenac,3,55,Painkiller
-MED065,Aceclofenac,4,49,Painkiller
-MED065,Aceclofenac,5,48,Painkiller
-MED065,Aceclofenac,6,54,Painkiller
-MED065,Aceclofenac,7,54,Painkiller
-MED065,Aceclofenac,8,47,Painkiller
-MED065,Aceclofenac,9,61,Painkiller
-MED065,Aceclofenac,10,60,Painkiller
-MED065,Aceclofenac,11,53,Painkiller
-MED065,Aceclofenac,12,47,Painkiller
-MED066,Paracetamol,1,118,Fever
-MED066,Paracetamol,2,107,Fever
-MED066,Paracetamol,3,105,Fever
-MED066,Paracetamol,4,81,Fever
-MED066,Paracetamol,5,75,Fever
-MED066,Paracetamol,6,79,Fever
-MED066,Paracetamol,7,92,Fever
-MED066,Paracetamol,8,83,Fever
-MED066,Paracetamol,9,91,Fever
-MED066,Paracetamol,10,95,Fever
-MED066,Paracetamol,11,121,Fever
-MED066,Paracetamol,12,108,Fever
-MED067,Ibuprofen,1,133,Fever
-MED067,Ibuprofen,2,133,Fever
-MED067,Ibuprofen,3,102,Fever
-MED067,Ibuprofen,4,97,Fever
-MED067,Ibuprofen,5,87,Fever
-MED067,Ibuprofen,6,90,Fever
-MED067,Ibuprofen,7,90,Fever
-MED067,Ibuprofen,8,109,Fever
-MED067,Ibuprofen,9,93,Fever
-MED067,Ibuprofen,10,103,Fever
-MED067,Ibuprofen,11,123,Fever
-MED067,Ibuprofen,12,137,Fever
-MED068,Dolo 650,1,147,Fever
-MED068,Dolo 650,2,132,Fever
-MED068,Dolo 650,3,136,Fever
-MED068,Dolo 650,4,105,Fever
-MED068,Dolo 650,5,112,Fever
-MED068,Dolo 650,6,99,Fever
-MED068,Dolo 650,7,109,Fever
-MED068,Dolo 650,8,116,Fever
-MED068,Dolo 650,9,111,Fever
-MED068,Dolo 650,10,143,Fever
-MED068,Dolo 650,11,150,Fever
-MED068,Dolo 650,12,135,Fever
-MED069,Loratadine,1,116,Allergy
-MED069,Loratadine,2,104,Allergy
-MED069,Loratadine,3,172,Allergy
-MED069,Loratadine,4,184,Allergy
-MED069,Loratadine,5,175,Allergy
-MED069,Loratadine,6,129,Allergy
-MED069,Loratadine,7,140,Allergy
-MED069,Loratadine,8,161,Allergy
-MED069,Loratadine,9,183,Allergy
-MED069,Loratadine,10,147,Allergy
-MED069,Loratadine,11,103,Allergy
-MED069,Loratadine,12,107,Allergy
-MED070,Ascoril,1,202,Cold/Cough
-MED070,Ascoril,2,203,Cold/Cough
-MED070,Ascoril,3,172,Cold/Cough
-MED070,Ascoril,4,124,Cold/Cough
-MED070,Ascoril,5,113,Cold/Cough
-MED070,Ascoril,6,97,Cold/Cough
-MED070,Ascoril,7,120,Cold/Cough
-MED070,Ascoril,8,123,Cold/Cough
-MED070,Ascoril,9,147,Cold/Cough
-MED070,Ascoril,10,151,Cold/Cough
-MED070,Ascoril,11,181,Cold/Cough
-MED070,Ascoril,12,225,Cold/Cough
-MED071,Dolo 650,1,123,Fever
-MED071,Dolo 650,2,137,Fever
-MED071,Dolo 650,3,124,Fever
-MED071,Dolo 650,4,107,Fever
-MED071,Dolo 650,5,107,Fever
-MED071,Dolo 650,6,95,Fever
-MED071,Dolo 650,7,93,Fever
-MED071,Dolo 650,8,102,Fever
-MED071,Dolo 650,9,115,Fever
-MED071,Dolo 650,10,128,Fever
-MED071,Dolo 650,11,144,Fever
-MED071,Dolo 650,12,111,Fever
-MED072,Dolo 650,1,44,Fever
-MED072,Dolo 650,2,53,Fever
-MED072,Dolo 650,3,53,Fever
-MED072,Dolo 650,4,44,Fever
-MED072,Dolo 650,5,41,Fever
-MED072,Dolo 650,6,33,Fever
-MED072,Dolo 650,7,34,Fever
-MED072,Dolo 650,8,44,Fever
-MED072,Dolo 650,9,47,Fever
-MED072,Dolo 650,10,46,Fever
-MED072,Dolo 650,11,54,Fever
-MED072,Dolo 650,12,57,Fever
-MED073,Loratadine,1,40,Allergy
-MED073,Loratadine,2,57,Allergy
-MED073,Loratadine,3,66,Allergy
-MED073,Loratadine,4,73,Allergy
-MED073,Loratadine,5,63,Allergy
-MED073,Loratadine,6,59,Allergy
-MED073,Loratadine,7,60,Allergy
-MED073,Loratadine,8,70,Allergy
-MED073,Loratadine,9,63,Allergy
-MED073,Loratadine,10,56,Allergy
-MED073,Loratadine,11,59,Allergy
-MED073,Loratadine,12,48,Allergy
-MED074,Levocetirizine,1,96,Allergy
-MED074,Levocetirizine,2,132,Allergy
-MED074,Levocetirizine,3,140,Allergy
-MED074,Levocetirizine,4,168,Allergy
-MED074,Levocetirizine,5,145,Allergy
-MED074,Levocetirizine,6,121,Allergy
-MED074,Levocetirizine,7,111,Allergy
-MED074,Levocetirizine,8,157,Allergy
-MED074,Levocetirizine,9,176,Allergy
-MED074,Levocetirizine,10,151,Allergy
-MED074,Levocetirizine,11,105,Allergy
-MED074,Levocetirizine,12,102,Allergy
-MED075,Paracetamol,1,56,Fever
-MED075,Paracetamol,2,60,Fever
-MED075,Paracetamol,3,56,Fever
-MED075,Paracetamol,4,43,Fever
-MED075,Paracetamol,5,40,Fever
-MED075,Paracetamol,6,43,Fever
-MED075,Paracetamol,7,40,Fever
-MED075,Paracetamol,8,47,Fever
-MED075,Paracetamol,9,48,Fever
-MED075,Paracetamol,10,49,Fever
-MED075,Paracetamol,11,60,Fever
-MED075,Paracetamol,12,60,Fever
-MED076,Pantoprazole,1,149,Gastric
-MED076,Pantoprazole,2,122,Gastric
-MED076,Pantoprazole,3,148,Gastric
-MED076,Pantoprazole,4,149,Gastric
-MED076,Pantoprazole,5,133,Gastric
-MED076,Pantoprazole,6,132,Gastric
-MED076,Pantoprazole,7,137,Gastric
-MED076,Pantoprazole,8,139,Gastric
-MED076,Pantoprazole,9,112,Gastric
-MED076,Pantoprazole,10,134,Gastric
-MED076,Pantoprazole,11,129,Gastric
-MED076,Pantoprazole,12,145,Gastric
-MED077,Diclofenac,1,113,Painkiller
-MED077,Diclofenac,2,131,Painkiller
-MED077,Diclofenac,3,124,Painkiller
-MED077,Diclofenac,4,115,Painkiller
-MED077,Diclofenac,5,125,Painkiller
-MED077,Diclofenac,6,125,Painkiller
-MED077,Diclofenac,7,127,Painkiller
-MED077,Diclofenac,8,129,Painkiller
-MED077,Diclofenac,9,126,Painkiller
-MED077,Diclofenac,10,133,Painkiller
-MED077,Diclofenac,11,125,Painkiller
-MED077,Diclofenac,12,135,Painkiller
-MED078,Omeprazole,1,111,Gastric
-MED078,Omeprazole,2,100,Gastric
-MED078,Omeprazole,3,105,Gastric
-MED078,Omeprazole,4,120,Gastric
-MED078,Omeprazole,5,125,Gastric
-MED078,Omeprazole,6,93,Gastric
-MED078,Omeprazole,7,100,Gastric
-MED078,Omeprazole,8,114,Gastric
-MED078,Omeprazole,9,96,Gastric
-MED078,Omeprazole,10,95,Gastric
-MED078,Omeprazole,11,108,Gastric
-MED078,Omeprazole,12,122,Gastric
-MED079,Cetirizine,1,70,Allergy
-MED079,Cetirizine,2,88,Allergy
-MED079,Cetirizine,3,114,Allergy
-MED079,Cetirizine,4,104,Allergy
-MED079,Cetirizine,5,114,Allergy
-MED079,Cetirizine,6,86,Allergy
-MED079,Cetirizine,7,94,Allergy
-MED079,Cetirizine,8,102,Allergy
-MED079,Cetirizine,9,99,Allergy
-MED079,Cetirizine,10,84,Allergy
-MED079,Cetirizine,11,89,Allergy
-MED079,Cetirizine,12,62,Allergy
-MED080,Cetirizine,1,134,Allergy
-MED080,Cetirizine,2,147,Allergy
-MED080,Cetirizine,3,189,Allergy
-MED080,Cetirizine,4,220,Allergy
-MED080,Cetirizine,5,202,Allergy
-MED080,Cetirizine,6,161,Allergy
-MED080,Cetirizine,7,142,Allergy
-MED080,Cetirizine,8,176,Allergy
-MED080,Cetirizine,9,151,Allergy
-MED080,Cetirizine,10,164,Allergy
-MED080,Cetirizine,11,131,Allergy
-MED080,Cetirizine,12,124,Allergy
-MED081,Cefixime,1,120,Antibiotic
-MED081,Cefixime,2,117,Antibiotic
-MED081,Cefixime,3,126,Antibiotic
-MED081,Cefixime,4,130,Antibiotic
-MED081,Cefixime,5,101,Antibiotic
-MED081,Cefixime,6,105,Antibiotic
-MED081,Cefixime,7,98,Antibiotic
-MED081,Cefixime,8,128,Antibiotic
-MED081,Cefixime,9,117,Antibiotic
-MED081,Cefixime,10,129,Antibiotic
-MED081,Cefixime,11,105,Antibiotic
-MED081,Cefixime,12,99,Antibiotic
-MED082,Cetirizine,1,26,Allergy
-MED082,Cetirizine,2,30,Allergy
-MED082,Cetirizine,3,33,Allergy
-MED082,Cetirizine,4,37,Allergy
-MED082,Cetirizine,5,32,Allergy
-MED082,Cetirizine,6,34,Allergy
-MED082,Cetirizine,7,28,Allergy
-MED082,Cetirizine,8,32,Allergy
-MED082,Cetirizine,9,31,Allergy
-MED082,Cetirizine,10,36,Allergy
-MED082,Cetirizine,11,24,Allergy
-MED082,Cetirizine,12,23,Allergy
-MED083,Azithromycin,1,152,Antibiotic
-MED083,Azithromycin,2,155,Antibiotic
-MED083,Azithromycin,3,164,Antibiotic
-MED083,Azithromycin,4,141,Antibiotic
-MED083,Azithromycin,5,155,Antibiotic
-MED083,Azithromycin,6,129,Antibiotic
-MED083,Azithromycin,7,141,Antibiotic
-MED083,Azithromycin,8,127,Antibiotic
-MED083,Azithromycin,9,144,Antibiotic
-MED083,Azithromycin,10,141,Antibiotic
-MED083,Azithromycin,11,164,Antibiotic
-MED083,Azithromycin,12,124,Antibiotic
-MED084,Dolo 650,1,139,Fever
-MED084,Dolo 650,2,142,Fever
-MED084,Dolo 650,3,151,Fever
-MED084,Dolo 650,4,120,Fever
-MED084,Dolo 650,5,95,Fever
-MED084,Dolo 650,6,102,Fever
-MED084,Dolo 650,7,110,Fever
-MED084,Dolo 650,8,138,Fever
-MED084,Dolo 650,9,115,Fever
-MED084,Dolo 650,10,129,Fever
-MED084,Dolo 650,11,131,Fever
-MED084,Dolo 650,12,128,Fever
-MED085,Ibuprofen,1,83,Fever
-MED085,Ibuprofen,2,74,Fever
-MED085,Ibuprofen,3,72,Fever
-MED085,Ibuprofen,4,59,Fever
-MED085,Ibuprofen,5,58,Fever
-MED085,Ibuprofen,6,43,Fever
-MED085,Ibuprofen,7,61,Fever
-MED085,Ibuprofen,8,58,Fever
-MED085,Ibuprofen,9,55,Fever
-MED085,Ibuprofen,10,70,Fever
-MED085,Ibuprofen,11,65,Fever
-MED085,Ibuprofen,12,81,Fever
-MED086,Ibuprofen,1,147,Fever
-MED086,Ibuprofen,2,148,Fever
-MED086,Ibuprofen,3,164,Fever
-MED086,Ibuprofen,4,115,Fever
-MED086,Ibuprofen,5,108,Fever
-MED086,Ibuprofen,6,120,Fever
-MED086,Ibuprofen,7,103,Fever
-MED086,Ibuprofen,8,149,Fever
-MED086,Ibuprofen,9,120,Fever
-MED086,Ibuprofen,10,132,Fever
-MED086,Ibuprofen,11,149,Fever
-MED086,Ibuprofen,12,146,Fever
-MED087,Naproxen,1,97,Painkiller
-MED087,Naproxen,2,79,Painkiller
-MED087,Naproxen,3,79,Painkiller
-MED087,Naproxen,4,101,Painkiller
-MED087,Naproxen,5,85,Painkiller
-MED087,Naproxen,6,88,Painkiller
-MED087,Naproxen,7,83,Painkiller
-MED087,Naproxen,8,80,Painkiller
-MED087,Naproxen,9,99,Painkiller
-MED087,Naproxen,10,93,Painkiller
-MED087,Naproxen,11,99,Painkiller
-MED087,Naproxen,12,92,Painkiller
-MED088,Amoxicillin,1,32,Antibiotic
-MED088,Amoxicillin,2,30,Antibiotic
-MED088,Amoxicillin,3,26,Antibiotic
-MED088,Amoxicillin,4,30,Antibiotic
-MED088,Amoxicillin,5,34,Antibiotic
-MED088,Amoxicillin,6,25,Antibiotic
-MED088,Amoxicillin,7,32,Antibiotic
-MED088,Amoxicillin,8,33,Antibiotic
-MED088,Amoxicillin,9,30,Antibiotic
-MED088,Amoxicillin,10,29,Antibiotic
-MED088,Amoxicillin,11,34,Antibiotic
-MED088,Amoxicillin,12,26,Antibiotic
-MED089,Loratadine,1,61,Allergy
-MED089,Loratadine,2,67,Allergy
-MED089,Loratadine,3,97,Allergy
-MED089,Loratadine,4,99,Allergy
-MED089,Loratadine,5,103,Allergy
-MED089,Loratadine,6,67,Allergy
-MED089,Loratadine,7,67,Allergy
-MED089,Loratadine,8,87,Allergy
-MED089,Loratadine,9,80,Allergy
-MED089,Loratadine,10,78,Allergy
-MED089,Loratadine,11,72,Allergy
-MED089,Loratadine,12,62,Allergy
-MED090,Metformin,1,37,Diabetes
-MED090,Metformin,2,45,Diabetes
-MED090,Metformin,3,40,Diabetes
-MED090,Metformin,4,39,Diabetes
-MED090,Metformin,5,41,Diabetes
-MED090,Metformin,6,35,Diabetes
-MED090,Metformin,7,42,Diabetes
-MED090,Metformin,8,44,Diabetes
-MED090,Metformin,9,41,Diabetes
-MED090,Metformin,10,43,Diabetes
-MED090,Metformin,11,42,Diabetes
-MED090,Metformin,12,36,Diabetes
-MED091,Naproxen,1,37,Painkiller
-MED091,Naproxen,2,34,Painkiller
-MED091,Naproxen,3,36,Painkiller
-MED091,Naproxen,4,37,Painkiller
-MED091,Naproxen,5,37,Painkiller
-MED091,Naproxen,6,33,Painkiller
-MED091,Naproxen,7,37,Painkiller
-MED091,Naproxen,8,39,Painkiller
-MED091,Naproxen,9,36,Painkiller
-MED091,Naproxen,10,34,Painkiller
-MED091,Naproxen,11,42,Painkiller
-MED091,Naproxen,12,33,Painkiller
-MED092,Naproxen,1,149,Painkiller
-MED092,Naproxen,2,119,Painkiller
-MED092,Naproxen,3,119,Painkiller
-MED092,Naproxen,4,145,Painkiller
-MED092,Naproxen,5,148,Painkiller
-MED092,Naproxen,6,138,Painkiller
-MED092,Naproxen,7,139,Painkiller
-MED092,Naproxen,8,138,Painkiller
-MED092,Naproxen,9,129,Painkiller
-MED092,Naproxen,10,120,Painkiller
-MED092,Naproxen,11,130,Painkiller
-MED092,Naproxen,12,142,Painkiller
-MED093,Insulin,1,36,Diabetes
-MED093,Insulin,2,37,Diabetes
-MED093,Insulin,3,36,Diabetes
-MED093,Insulin,4,38,Diabetes
-MED093,Insulin,5,35,Diabetes
-MED093,Insulin,6,32,Diabetes
-MED093,Insulin,7,34,Diabetes
-MED093,Insulin,8,31,Diabetes
-MED093,Insulin,9,35,Diabetes
-MED093,Insulin,10,31,Diabetes
-MED093,Insulin,11,30,Diabetes
-MED093,Insulin,12,37,Diabetes
-MED094,Aceclofenac,1,117,Painkiller
-MED094,Aceclofenac,2,131,Painkiller
-MED094,Aceclofenac,3,124,Painkiller
-MED094,Aceclofenac,4,133,Painkiller
-MED094,Aceclofenac,5,134,Painkiller
-MED094,Aceclofenac,6,139,Painkiller
-MED094,Aceclofenac,7,133,Painkiller
-MED094,Aceclofenac,8,126,Painkiller
-MED094,Aceclofenac,9,127,Painkiller
-MED094,Aceclofenac,10,104,Painkiller
-MED094,Aceclofenac,11,137,Painkiller
-MED094,Aceclofenac,12,134,Painkiller
-MED095,Paracetamol,1,119,Fever
-MED095,Paracetamol,2,116,Fever
-MED095,Paracetamol,3,124,Fever
-MED095,Paracetamol,4,90,Fever
-MED095,Paracetamol,5,91,Fever
-MED095,Paracetamol,6,72,Fever
-MED095,Paracetamol,7,106,Fever
-MED095,Paracetamol,8,109,Fever
-MED095,Paracetamol,9,103,Fever
-MED095,Paracetamol,10,105,Fever
-MED095,Paracetamol,11,133,Fever
-MED095,Paracetamol,12,110,Fever
-MED096,Aceclofenac,1,90,Painkiller
-MED096,Aceclofenac,2,76,Painkiller
-MED096,Aceclofenac,3,81,Painkiller
-MED096,Aceclofenac,4,79,Painkiller
-MED096,Aceclofenac,5,80,Painkiller
-MED096,Aceclofenac,6,89,Painkiller
-MED096,Aceclofenac,7,90,Painkiller
-MED096,Aceclofenac,8,85,Painkiller
-MED096,Aceclofenac,9,73,Painkiller
-MED096,Aceclofenac,10,72,Painkiller
-MED096,Aceclofenac,11,75,Painkiller
-MED096,Aceclofenac,12,86,Painkiller
-MED097,Cefixime,1,78,Antibiotic
-MED097,Cefixime,2,69,Antibiotic
-MED097,Cefixime,3,78,Antibiotic
-MED097,Cefixime,4,74,Antibiotic
-MED097,Cefixime,5,73,Antibiotic
-MED097,Cefixime,6,69,Antibiotic
-MED097,Cefixime,7,80,Antibiotic
-MED097,Cefixime,8,66,Antibiotic
-MED097,Cefixime,9,73,Antibiotic
-MED097,Cefixime,10,70,Antibiotic
-MED097,Cefixime,11,79,Antibiotic
-MED097,Cefixime,12,74,Antibiotic
-MED098,Cefixime,1,128,Antibiotic
-MED098,Cefixime,2,105,Antibiotic
-MED098,Cefixime,3,118,Antibiotic
-MED098,Cefixime,4,125,Antibiotic
-MED098,Cefixime,5,103,Antibiotic
-MED098,Cefixime,6,114,Antibiotic
-MED098,Cefixime,7,111,Antibiotic
-MED098,Cefixime,8,108,Antibiotic
-MED098,Cefixime,9,113,Antibiotic
-MED098,Cefixime,10,115,Antibiotic
-MED098,Cefixime,11,103,Antibiotic
-MED098,Cefixime,12,131,Antibiotic
-MED099,Glimepiride,1,107,Diabetes
-MED099,Glimepiride,2,114,Diabetes
-MED099,Glimepiride,3,126,Diabetes
-MED099,Glimepiride,4,119,Diabetes
-MED099,Glimepiride,5,130,Diabetes
-MED099,Glimepiride,6,129,Diabetes
-MED099,Glimepiride,7,103,Diabetes
-MED099,Glimepiride,8,131,Diabetes
-MED099,Glimepiride,9,102,Diabetes
-MED099,Glimepiride,10,101,Diabetes
-MED099,Glimepiride,11,134,Diabetes
-MED099,Glimepiride,12,131,Diabetes
-MED100,Glimepiride,1,133,Diabetes
-MED100,Glimepiride,2,133,Diabetes
-MED100,Glimepiride,3,139,Diabetes
-MED100,Glimepiride,4,127,Diabetes
-MED100,Glimepiride,5,115,Diabetes
-MED100,Glimepiride,6,112,Diabetes
-MED100,Glimepiride,7,124,Diabetes
-MED100,Glimepiride,8,142,Diabetes
-MED100,Glimepiride,9,135,Diabetes
-MED100,Glimepiride,10,144,Diabetes
-MED100,Glimepiride,11,147,Diabetes
-MED100,Glimepiride,12,114,Diabetes
+1,Paracetamol 500mg,1,250,Fever
+1,Paracetamol 500mg,2,280,Fever
+1,Paracetamol 500mg,3,320,Fever
+1,Paracetamol 500mg,4,290,Fever
+1,Paracetamol 500mg,5,310,Fever
+1,Paracetamol 500mg,6,350,Fever
+1,Paracetamol 500mg,7,380,Fever
+1,Paracetamol 500mg,8,340,Fever
+1,Paracetamol 500mg,9,360,Fever
+1,Paracetamol 500mg,10,330,Fever
+1,Paracetamol 500mg,11,320,Fever
+1,Paracetamol 500mg,12,290,Fever
+2,Ibuprofen 400mg,1,300,Fever
+2,Ibuprofen 400mg,2,320,Fever
+2,Ibuprofen 400mg,3,340,Fever
+2,Ibuprofen 400mg,4,350,Fever
+2,Ibuprofen 400mg,5,360,Fever
+2,Ibuprofen 400mg,6,380,Fever
+2,Ibuprofen 400mg,7,400,Fever
+2,Ibuprofen 400mg,8,380,Fever
+2,Ibuprofen 400mg,9,390,Fever
+2,Ibuprofen 400mg,10,360,Fever
+2,Ibuprofen 400mg,11,340,Fever
+2,Ibuprofen 400mg,12,320,Fever
+3,Amoxicillin 250mg,1,180,Antibiotic
+3,Amoxicillin 250mg,2,190,Antibiotic
+3,Amoxicillin 250mg,3,210,Antibiotic
+3,Amoxicillin 250mg,4,200,Antibiotic
+3,Amoxicillin 250mg,5,220,Antibiotic
+3,Amoxicillin 250mg,6,240,Antibiotic
+3,Amoxicillin 250mg,7,260,Antibiotic
+3,Amoxicillin 250mg,8,240,Antibiotic
+3,Amoxicillin 250mg,9,250,Antibiotic
+3,Amoxicillin 250mg,10,220,Antibiotic
+3,Amoxicillin 250mg,11,200,Antibiotic
+3,Amoxicillin 250mg,12,180,Antibiotic
+4,Azithromycin 500mg,1,150,Antibiotic
+4,Azithromycin 500mg,2,165,Antibiotic
+4,Azithromycin 500mg,3,180,Antibiotic
+4,Azithromycin 500mg,4,175,Antibiotic
+4,Azithromycin 500mg,5,190,Antibiotic
+4,Azithromycin 500mg,6,210,Antibiotic
+4,Azithromycin 500mg,7,230,Antibiotic
+4,Azithromycin 500mg,8,210,Antibiotic
+4,Azithromycin 500mg,9,220,Antibiotic
+4,Azithromycin 500mg,10,200,Antibiotic
+4,Azithromycin 500mg,11,180,Antibiotic
+4,Azithromycin 500mg,12,170,Antibiotic
+5,Cetirizine 10mg,1,220,Cold/Cough
+5,Cetirizine 10mg,2,240,Cold/Cough
+5,Cetirizine 10mg,3,260,Cold/Cough
+5,Cetirizine 10mg,4,250,Cold/Cough
+5,Cetirizine 10mg,5,270,Cold/Cough
+5,Cetirizine 10mg,6,290,Cold/Cough
+5,Cetirizine 10mg,7,310,Cold/Cough
+5,Cetirizine 10mg,8,290,Cold/Cough
+5,Cetirizine 10mg,9,300,Cold/Cough
+5,Cetirizine 10mg,10,280,Cold/Cough
+5,Cetirizine 10mg,11,260,Cold/Cough
+5,Cetirizine 10mg,12,240,Cold/Cough
+6,Metformin 500mg,1,400,General
+6,Metformin 500mg,2,420,General
+6,Metformin 500mg,3,450,General
+6,Metformin 500mg,4,430,General
+6,Metformin 500mg,5,460,General
+6,Metformin 500mg,6,490,General
+6,Metformin 500mg,7,520,General
+6,Metformin 500mg,8,480,General
+6,Metformin 500mg,9,510,General
+6,Metformin 500mg,10,480,General
+6,Metformin 500mg,11,450,General
+6,Metformin 500mg,12,420,General
+7,Aspirin 75mg,1,350,Fever
+7,Aspirin 75mg,2,370,Fever
+7,Aspirin 75mg,3,400,Fever
+7,Aspirin 75mg,4,380,Fever
+7,Aspirin 75mg,5,410,Fever
+7,Aspirin 75mg,6,440,Fever
+7,Aspirin 75mg,7,470,Fever
+7,Aspirin 75mg,8,430,Fever
+7,Aspirin 75mg,9,460,Fever
+7,Aspirin 75mg,10,430,Fever
+7,Aspirin 75mg,11,400,Fever
+7,Aspirin 75mg,12,370,Fever
+8,Pantoprazole 40mg,1,200,Gastric
+8,Pantoprazole 40mg,2,220,Gastric
+8,Pantoprazole 40mg,3,240,Gastric
+8,Pantoprazole 40mg,4,230,Gastric
+8,Pantoprazole 40mg,5,250,Gastric
+8,Pantoprazole 40mg,6,270,Gastric
+8,Pantoprazole 40mg,7,290,Gastric
+8,Pantoprazole 40mg,8,270,Gastric
+8,Pantoprazole 40mg,9,280,Gastric
+8,Pantoprazole 40mg,10,260,Gastric
+8,Pantoprazole 40mg,11,240,Gastric
+8,Pantoprazole 40mg,12,220,Gastric
+9,Vitamin D3,1,180,Vitamin
+9,Vitamin D3,2,195,Vitamin
+9,Vitamin D3,3,210,Vitamin
+9,Vitamin D3,4,205,Vitamin
+9,Vitamin D3,5,225,Vitamin
+9,Vitamin D3,6,245,Vitamin
+9,Vitamin D3,7,265,Vitamin
+9,Vitamin D3,8,245,Vitamin
+9,Vitamin D3,9,260,Vitamin
+9,Vitamin D3,10,240,Vitamin
+9,Vitamin D3,11,220,Vitamin
+9,Vitamin D3,12,200,Vitamin
+10,Calcium Tablets,1,210,Vitamin
+10,Calcium Tablets,2,225,Vitamin
+10,Calcium Tablets,3,245,Vitamin
+10,Calcium Tablets,4,235,Vitamin
+10,Calcium Tablets,5,260,Vitamin
+10,Calcium Tablets,6,280,Vitamin
+10,Calcium Tablets,7,310,Vitamin
+10,Calcium Tablets,8,275,Vitamin
+10,Calcium Tablets,9,295,Vitamin
+10,Calcium Tablets,10,270,Vitamin
+10,Calcium Tablets,11,250,Vitamin
+10,Calcium Tablets,12,230,Vitamin
+11,ORS Sachet,1,500,General
+11,ORS Sachet,2,545,General
+11,ORS Sachet,3,600,General
+11,ORS Sachet,4,570,General
+11,ORS Sachet,5,615,General
+11,ORS Sachet,6,670,General
+11,ORS Sachet,7,730,General
+11,ORS Sachet,8,670,General
+11,ORS Sachet,9,730,General
+11,ORS Sachet,10,680,General
+11,ORS Sachet,11,620,General
+11,ORS Sachet,12,575,General
+12,Insulin Injection,1,120,General
+12,Insulin Injection,2,130,General
+12,Insulin Injection,3,145,General
+12,Insulin Injection,4,140,General
+12,Insulin Injection,5,155,General
+12,Insulin Injection,6,170,General
+12,Insulin Injection,7,190,General
+12,Insulin Injection,8,170,General
+12,Insulin Injection,9,180,General
+12,Insulin Injection,10,165,General
+12,Insulin Injection,11,150,General
+12,Insulin Injection,12,140,General
+13,Cough Syrup,1,170,Cold/Cough
+13,Cough Syrup,2,185,Cold/Cough
+13,Cough Syrup,3,205,Cold/Cough
+13,Cough Syrup,4,195,Cold/Cough
+13,Cough Syrup,5,215,Cold/Cough
+13,Cough Syrup,6,235,Cold/Cough
+13,Cough Syrup,7,255,Cold/Cough
+13,Cough Syrup,8,230,Cold/Cough
+13,Cough Syrup,9,250,Cold/Cough
+13,Cough Syrup,10,220,Cold/Cough
+13,Cough Syrup,11,200,Cold/Cough
+13,Cough Syrup,12,185,Cold/Cough
+14,Antacid Suspension,1,200,Gastric
+14,Antacid Suspension,2,220,Gastric
+14,Antacid Suspension,3,240,Gastric
+14,Antacid Suspension,4,230,Gastric
+14,Antacid Suspension,5,250,Gastric
+14,Antacid Suspension,6,270,Gastric
+14,Antacid Suspension,7,300,Gastric
+14,Antacid Suspension,8,270,Gastric
+14,Antacid Suspension,9,290,Gastric
+14,Antacid Suspension,10,270,Gastric
+14,Antacid Suspension,11,250,Gastric
+14,Antacid Suspension,12,220,Gastric
+15,Multivitamin Capsules,1,260,Vitamin
+15,Multivitamin Capsules,2,280,Vitamin
+15,Multivitamin Capsules,3,310,Vitamin
+15,Multivitamin Capsules,4,295,Vitamin
+15,Multivitamin Capsules,5,330,Vitamin
+15,Multivitamin Capsules,6,360,Vitamin
+15,Multivitamin Capsules,7,400,Vitamin
+15,Multivitamin Capsules,8,360,Vitamin
+15,Multivitamin Capsules,9,390,Vitamin
+15,Multivitamin Capsules,10,360,Vitamin
+15,Multivitamin Capsules,11,330,Vitamin
+15,Multivitamin Capsules,12,300,Vitamin
+16,Zinc Tablets,1,240,Vitamin
+16,Zinc Tablets,2,260,Vitamin
+16,Zinc Tablets,3,290,Vitamin
+16,Zinc Tablets,4,280,Vitamin
+16,Zinc Tablets,5,310,Vitamin
+16,Zinc Tablets,6,340,Vitamin
+16,Zinc Tablets,7,380,Vitamin
+16,Zinc Tablets,8,340,Vitamin
+16,Zinc Tablets,9,370,Vitamin
+16,Zinc Tablets,10,340,Vitamin
+16,Zinc Tablets,11,310,Vitamin
+16,Zinc Tablets,12,280,Vitamin
+17,Iron Tablets,1,190,Vitamin
+17,Iron Tablets,2,210,Vitamin
+17,Iron Tablets,3,235,Vitamin
+17,Iron Tablets,4,220,Vitamin
+17,Iron Tablets,5,245,Vitamin
+17,Iron Tablets,6,270,Vitamin
+17,Iron Tablets,7,300,Vitamin
+17,Iron Tablets,8,270,Vitamin
+17,Iron Tablets,9,300,Vitamin
+17,Iron Tablets,10,270,Vitamin
+17,Iron Tablets,11,250,Vitamin
+17,Iron Tablets,12,225,Vitamin
+18,Folic Acid,1,210,General
+18,Folic Acid,2,230,General
+18,Folic Acid,3,255,General
+18,Folic Acid,4,245,General
+18,Folic Acid,5,270,General
+18,Folic Acid,6,295,General
+18,Folic Acid,7,330,General
+18,Folic Acid,8,295,General
+18,Folic Acid,9,320,General
+18,Folic Acid,10,300,General
+18,Folic Acid,11,280,General
+18,Folic Acid,12,255,General
+19,Saline IV,1,140,General
+19,Saline IV,2,155,General
+19,Saline IV,3,175,General
+19,Saline IV,4,165,General
+19,Saline IV,5,185,General
+19,Saline IV,6,210,General
+19,Saline IV,7,240,General
+19,Saline IV,8,210,General
+19,Saline IV,9,235,General
+19,Saline IV,10,200,General
+19,Saline IV,11,180,General
+19,Saline IV,12,170,General
+20,Glucose IV,1,160,General
+20,Glucose IV,2,180,General
+20,Glucose IV,3,200,General
+20,Glucose IV,4,190,General
+20,Glucose IV,5,215,General
+20,Glucose IV,6,240,General
+20,Glucose IV,7,275,General
+20,Glucose IV,8,240,General
+20,Glucose IV,9,270,General
+20,Glucose IV,10,240,General
+20,Glucose IV,11,220,General
+20,Glucose IV,12,200,General
+21,Dolo 650,1,300,General
+21,Dolo 650,2,330,General
+21,Dolo 650,3,370,General
+21,Dolo 650,4,350,General
+21,Dolo 650,5,390,General
+21,Dolo 650,6,430,General
+21,Dolo 650,7,480,General
+21,Dolo 650,8,430,General
+21,Dolo 650,9,480,General
+21,Dolo 650,10,440,General
+21,Dolo 650,11,400,General
+21,Dolo 650,12,360,General
+22,Crocin Tablets,1,280,General
+22,Crocin Tablets,2,310,General
+22,Crocin Tablets,3,345,General
+22,Crocin Tablets,4,325,General
+22,Crocin Tablets,5,365,General
+22,Crocin Tablets,6,400,General
+22,Crocin Tablets,7,445,General
+22,Crocin Tablets,8,400,General
+22,Crocin Tablets,9,445,General
+22,Crocin Tablets,10,410,General
+22,Crocin Tablets,11,375,General
+22,Crocin Tablets,12,340,General
+23,Benadryl Syrup,1,150,General
+23,Benadryl Syrup,2,165,General
+23,Benadryl Syrup,3,185,General
+23,Benadryl Syrup,4,175,General
+23,Benadryl Syrup,5,195,General
+23,Benadryl Syrup,6,220,General
+23,Benadryl Syrup,7,245,General
+23,Benadryl Syrup,8,220,General
+23,Benadryl Syrup,9,245,General
+23,Benadryl Syrup,10,215,General
+23,Benadryl Syrup,11,195,General
+23,Benadryl Syrup,12,180,General
+24,Augmentin 625,1,130,General
+24,Augmentin 625,2,145,General
+24,Augmentin 625,3,165,General
+24,Augmentin 625,4,155,General
+24,Augmentin 625,5,175,General
+24,Augmentin 625,6,200,General
+24,Augmentin 625,7,230,General
+24,Augmentin 625,8,200,General
+24,Augmentin 625,9,230,General
+24,Augmentin 625,10,200,General
+24,Augmentin 625,11,180,General
+24,Augmentin 625,12,170,General
+25,Gelusil Tablets,1,220,General
+25,Gelusil Tablets,2,245,General
+25,Gelusil Tablets,3,275,General
+25,Gelusil Tablets,4,260,General
+25,Gelusil Tablets,5,290,General
+25,Gelusil Tablets,6,320,General
+25,Gelusil Tablets,7,360,General
+25,Gelusil Tablets,8,320,General
+25,Gelusil Tablets,9,350,General
+25,Gelusil Tablets,10,320,General
+25,Gelusil Tablets,11,295,General
+25,Gelusil Tablets,12,270,General
+26,Thyronorm 50mcg,1,110,General
+26,Thyronorm 50mcg,2,120,General
+26,Thyronorm 50mcg,3,135,General
+26,Thyronorm 50mcg,4,130,General
+26,Thyronorm 50mcg,5,145,General
+26,Thyronorm 50mcg,6,160,General
+26,Thyronorm 50mcg,7,185,General
+26,Thyronorm 50mcg,8,160,General
+26,Thyronorm 50mcg,9,180,General
+26,Thyronorm 50mcg,10,160,General
+26,Thyronorm 50mcg,11,145,General
+26,Thyronorm 50mcg,12,130,General
+27,Shelcal 500,1,210,General
+27,Shelcal 500,2,235,General
+27,Shelcal 500,3,260,General
+27,Shelcal 500,4,245,General
+27,Shelcal 500,5,275,General
+27,Shelcal 500,6,305,General
+27,Shelcal 500,7,345,General
+27,Shelcal 500,8,305,General
+27,Shelcal 500,9,340,General
+27,Shelcal 500,10,310,General
+27,Shelcal 500,11,285,General
+27,Shelcal 500,12,260,General
+28,Limcee Vitamin C,1,250,Vitamin
+28,Limcee Vitamin C,2,280,Vitamin
+28,Limcee Vitamin C,3,315,Vitamin
+28,Limcee Vitamin C,4,295,Vitamin
+28,Limcee Vitamin C,5,330,Vitamin
+28,Limcee Vitamin C,6,365,Vitamin
+28,Limcee Vitamin C,7,410,Vitamin
+28,Limcee Vitamin C,8,365,Vitamin
+28,Limcee Vitamin C,9,410,Vitamin
+28,Limcee Vitamin C,10,380,Vitamin
+28,Limcee Vitamin C,11,350,Vitamin
+28,Limcee Vitamin C,12,320,Vitamin
+29,Ecosprin 75,1,270,General
+29,Ecosprin 75,2,300,General
+29,Ecosprin 75,3,340,General
+29,Ecosprin 75,4,320,General
+29,Ecosprin 75,5,360,General
+29,Ecosprin 75,6,400,General
+29,Ecosprin 75,7,450,General
+29,Ecosprin 75,8,400,General
+29,Ecosprin 75,9,450,General
+29,Ecosprin 75,10,420,General
+29,Ecosprin 75,11,390,General
+29,Ecosprin 75,12,360,General
+30,Pan D Capsule,1,200,General
+30,Pan D Capsule,2,225,General
+30,Pan D Capsule,3,250,General
+30,Pan D Capsule,4,235,General
+30,Pan D Capsule,5,265,General
+30,Pan D Capsule,6,295,General
+30,Pan D Capsule,7,335,General
+30,Pan D Capsule,8,295,General
+30,Pan D Capsule,9,330,General
+30,Pan D Capsule,10,300,General
+30,Pan D Capsule,11,280,General
+30,Pan D Capsule,12,255,General
+31,Omez 20,1,180,General
+31,Omez 20,2,200,General
+31,Omez 20,3,225,General
+31,Omez 20,4,210,General
+31,Omez 20,5,240,General
+31,Omez 20,6,270,General
+31,Omez 20,7,310,General
+31,Omez 20,8,270,General
+31,Omez 20,9,310,General
+31,Omez 20,10,280,General
+31,Omez 20,11,260,General
+31,Omez 20,12,235,General
+32,Atorvastatin 10mg,1,160,General
+32,Atorvastatin 10mg,2,180,General
+32,Atorvastatin 10mg,3,205,General
+32,Atorvastatin 10mg,4,190,General
+32,Atorvastatin 10mg,5,215,General
+32,Atorvastatin 10mg,6,245,General
+32,Atorvastatin 10mg,7,285,General
+32,Atorvastatin 10mg,8,245,General
+32,Atorvastatin 10mg,9,280,General
+32,Atorvastatin 10mg,10,250,General
+32,Atorvastatin 10mg,11,230,General
+32,Atorvastatin 10mg,12,210,General
+33,Telma 40,1,170,General
+33,Telma 40,2,190,General
+33,Telma 40,3,215,General
+33,Telma 40,4,200,General
+33,Telma 40,5,230,General
+33,Telma 40,6,265,General
+33,Telma 40,7,305,General
+33,Telma 40,8,265,General
+33,Telma 40,9,305,General
+33,Telma 40,10,280,General
+33,Telma 40,11,260,General
+33,Telma 40,12,235,General
+34,Amlodipine 5mg,1,220,General
+34,Amlodipine 5mg,2,245,General
+34,Amlodipine 5mg,3,275,General
+34,Amlodipine 5mg,4,260,General
+34,Amlodipine 5mg,5,290,General
+34,Amlodipine 5mg,6,320,General
+34,Amlodipine 5mg,7,360,General
+34,Amlodipine 5mg,8,320,General
+34,Amlodipine 5mg,9,350,General
+34,Amlodipine 5mg,10,320,General
+34,Amlodipine 5mg,11,295,General
+34,Amlodipine 5mg,12,270,General
+35,Losartan 50mg,1,210,General
+35,Losartan 50mg,2,235,General
+35,Losartan 50mg,3,260,General
+35,Losartan 50mg,4,245,General
+35,Losartan 50mg,5,275,General
+35,Losartan 50mg,6,305,General
+35,Losartan 50mg,7,345,General
+35,Losartan 50mg,8,305,General
+35,Losartan 50mg,9,340,General
+35,Losartan 50mg,10,310,General
+35,Losartan 50mg,11,285,General
+35,Losartan 50mg,12,260,General
+36,Glycomet 500,1,260,General
+36,Glycomet 500,2,290,General
+36,Glycomet 500,3,325,General
+36,Glycomet 500,4,310,General
+36,Glycomet 500,5,345,General
+36,Glycomet 500,6,380,General
+36,Glycomet 500,7,430,General
+36,Glycomet 500,8,380,General
+36,Glycomet 500,9,430,General
+36,Glycomet 500,10,400,General
+36,Glycomet 500,11,370,General
+36,Glycomet 500,12,340,General
+37,Glimipride 1mg,1,230,General
+37,Glimipride 1mg,2,255,General
+37,Glimipride 1mg,3,285,General
+37,Glimipride 1mg,4,270,General
+37,Glimipride 1mg,5,305,General
+37,Glimipride 1mg,6,340,General
+37,Glimipride 1mg,7,385,General
+37,Glimipride 1mg,8,340,General
+37,Glimipride 1mg,9,385,General
+37,Glimipride 1mg,10,360,General
+37,Glimipride 1mg,11,330,General
+37,Glimipride 1mg,12,300,General

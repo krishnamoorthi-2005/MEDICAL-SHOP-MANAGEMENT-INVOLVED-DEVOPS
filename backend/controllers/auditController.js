@@ -727,6 +727,14 @@ export const getAuditAnalytics = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid audit type' });
     }
 
+    // Validate required parameters
+    if (type === 'category' && !category) {
+      return res.status(400).json({ success: false, message: 'Category is required for category audit type' });
+    }
+    if (type === 'rack' && !rack) {
+      return res.status(400).json({ success: false, message: 'Rack is required for rack audit type' });
+    }
+
     // Build medicine filter based on audit type
     const medicineFilter = { discontinued: { $ne: true } };
     if (type === 'category' && category) {

@@ -72,5 +72,8 @@ const saleSchema = new mongoose.Schema({
 
 saleSchema.index({ createdAt: -1 });
 saleSchema.index({ customerId: 1 });
+// Additional indexes for analytics queries
+saleSchema.index({ createdAt: -1, paymentMethod: 1 });
+// Note: invoiceNumber already has a unique index from the field definition
 
 export default mongoose.model('Sale', saleSchema);

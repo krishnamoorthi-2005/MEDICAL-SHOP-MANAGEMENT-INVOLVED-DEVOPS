@@ -50,5 +50,8 @@ const medicineSchema = new mongoose.Schema({
 medicineSchema.index({ name: 'text' });
 medicineSchema.index({ genericId: 1 });
 medicineSchema.index({ manufacturerId: 1 });
+// Additional indexes for filter queries under load
+medicineSchema.index({ discontinued: 1, category: 1 });
+medicineSchema.index({ discontinued: 1, rackLocation: 1 });
 
 export default mongoose.model('Medicine', medicineSchema);

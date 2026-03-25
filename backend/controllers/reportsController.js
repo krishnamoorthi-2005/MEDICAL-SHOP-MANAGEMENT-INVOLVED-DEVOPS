@@ -19,6 +19,25 @@ const addDays = (date, days) => {
   return d;
 };
 
+const normalizePaymentMode = (value) => {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!normalized) return 'unknown';
+
+  if (['upi', 'online', 'gpay', 'googlepay', 'phonepe', 'paytm', 'scan', 'qr'].includes(normalized)) {
+    return 'upi';
+  }
+
+  if (['cash', 'cashondelivery', 'cod'].includes(normalized)) {
+    return 'cash';
+  }
+
+  if (['card', 'debit', 'credit'].includes(normalized)) {
+    return 'card';
+  }
+
+  return normalized;
+};
+
 const parseRange = ({ range, startDate, endDate }) => {
   // Always end at the current moment (end of today)
   const now = new Date();
@@ -168,6 +187,9 @@ export const getReportsAnalytics = async (req, res) => {
     const { start, end } = parseRange({ range, startDate, endDate });
     const startStr = toLocalDateString(start);
     const endStr = toLocalDateString(end);
+    
+    console.log('📊 Reports Analytics Request:', { range, startDate, endDate, start: startStr, end: endStr });
+    
     // === SALES + PROFIT (LEDGER-ONLY) ===
     // Derive per-day sales and profit from StockLedger SALE movements.
     const ledgerSalesAgg = await StockLedger.aggregate([
@@ -244,6 +266,11 @@ export const getReportsAnalytics = async (req, res) => {
         },
       },
     ]);
+    
+    console.log('📈 Ledger Sales Aggregation Results:', ledgerSalesAgg.length, 'days');
+    console.log('💳 Bills Per Day Results:', billsPerDayAgg.length, 'days');
+    console.log('📊 First ledger entry:', ledgerSalesAgg[0]);
+    console.log('📊 First bill entry:', billsPerDayAgg[0]);
 
     const billsMap = new Map(
       billsPerDayAgg.map((b) => [b._id, b.billCount || 0]),
@@ -276,7 +303,7 @@ export const getReportsAnalytics = async (req, res) => {
     );
 
     // Payment mode distribution aggregated from sales
-    const paymentModes = await Sale.aggregate([
+    const rawPaymentModes = await Sale.aggregate([
       {
         $match: {
           createdAt: { $gte: start, $lte: end },
@@ -299,6 +326,22 @@ export const getReportsAnalytics = async (req, res) => {
       },
       { $sort: { total: -1 } },
     ]);
+    
+    const paymentModeMap = new Map();
+    rawPaymentModes.forEach((row) => {
+      const mode = normalizePaymentMode(row.mode);
+      const current = paymentModeMap.get(mode) || { mode, count: 0, total: 0 };
+      current.count += row.count || 0;
+      current.total += row.total || 0;
+      paymentModeMap.set(mode, current);
+    });
+
+    const paymentModes = ['cash', 'upi', 'card'].map((mode) => paymentModeMap.get(mode) || { mode, count: 0, total: 0 });
+
+    const unknownPaymentModes = Array.from(paymentModeMap.values()).filter((row) => !['cash', 'upi', 'card'].includes(row.mode));
+    paymentModes.push(...unknownPaymentModes);
+
+    console.log('💰 Payment Modes Results:', paymentModes.length, 'modes', paymentModes);
 
     // Expiry loss from EXPIRED_WRITE_OFF entries
     const expiryAggregation = await StockLedger.aggregate([
@@ -404,6 +447,10 @@ export const getReportsAnalytics = async (req, res) => {
       items: inv.items?.length || 0,
       createdAt: inv.createdAt,
     }));
+    
+    console.log('🏆 Top Selling Items:', topSellingItems.length, 'items');
+    console.log('🧾 Recent Invoices:', recentInvoices.length, 'invoices');
+    console.log('📋 First invoice:', recentInvoices[0]);
 
     // Purchase totals for the period
     const purchaseAgg = await Purchase.aggregate([
@@ -438,6 +485,17 @@ export const getReportsAnalytics = async (req, res) => {
       deadStockValue,
       deadStockItems,
     };
+    
+    console.log('✅ FINAL REPORT DATA:', {
+      dateRange: data.range,
+      totals: data.totals,
+      dailySalesCount: data.dailySales.length,
+      paymentModesCount: data.paymentModes.length,
+      topItemsCount: data.topSellingItems.length,
+      recentInvoicesCount: data.recentInvoices.length,
+      expiryLoss: data.expiryLoss,
+      deadStockItems: data.deadStockItems,
+    });
 
     res.json({
       success: true,
@@ -598,6 +656,120 @@ export const getDeadStockReport = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to fetch dead stock report',
+    });
+  }
+};
+
+// Generate test data for reports (for development/testing)
+export const generateTestData = async (req, res) => {
+  try {
+    console.log('🔄 Generating test sales data...');
+    
+    // First, get or create test medicines
+    let medicines = await Medicine.find().limit(5).lean();
+    if (!medicines || medicines.length === 0) {
+      // If no medicines exist, create some test medicines
+      const medicineNames = ['Paracetamol 500mg', 'Ibuprofen 400mg', 'Amoxicillin 500mg', 'Vitamin C 1000mg', 'Aspirin 75mg'];
+      medicines = await Medicine.insertMany(
+        medicineNames.map((name) => ({
+          name,
+          genericName: name.split(' ')[0],
+          dosage: name.match(/\d+/)?.[0] || '500',
+          unit: 'mg',
+          category: 'General',
+          manufacturer: 'Test Pharma',
+        }))
+      );
+    }
+    
+    // Create/find test batches
+    let batches = await Batch.find({ medicineId: medicines[0]._id }).lean();
+    if (!batches || batches.length === 0) {
+      batches = await Batch.insertMany(
+        medicines.slice(0, 3).map((med, idx) => ({
+          medicineId: med._id,
+          batchNumber: `TEST-${Date.now()}-${idx}`,
+          expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+          purchasePrice: 10 + Math.random() * 20,
+          mrp: 20 + Math.random() * 40,
+          quantityAvailable: 100,
+          quantityPurchased: 100,
+        }))
+      );
+    }
+    
+    // Generate sales for the last 7 days
+    const salesCount = 10;
+    const paymentMethods = ['cash', 'card', 'online', 'cheque'];
+    const generatedSales = [];
+    
+    for (let i = 0; i < salesCount; i++) {
+      const daysAgo = Math.floor(Math.random() * 7);
+      const saleDate = new Date();
+      saleDate.setDate(saleDate.getDate() - daysAgo);
+      saleDate.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
+      
+      const batch = batches[Math.floor(Math.random() * batches.length)];
+      const quantity = Math.floor(2 + Math.random() * 8);
+      const unitPrice = batch.mrp || 30;
+      const subtotal = quantity * unitPrice;
+      const taxAmount = subtotal * 0.05;
+      const discountAmount = Math.floor(Math.random() * 50);
+      const total = subtotal + taxAmount - discountAmount;
+      
+      const sale = await Sale.create({
+        invoiceNumber: `INV-TEST-${Date.now()}-${i}`,
+        paymentMethod: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
+        items: [{
+          medicineId: batch.medicineId,
+          medicineName: medicines.find(m => m._id.equals(batch.medicineId))?.name || 'Test Medicine',
+          batchId: batch._id,
+          quantity,
+          unitPrice,
+          lineTotal: quantity * unitPrice,
+        }],
+        subtotal,
+        taxAmount,
+        discountAmount,
+        total,
+        paymentStatus: 'paid',
+        createdAt: saleDate,
+      });
+      
+      // Create corresponding stock ledger entry
+      await StockLedger.recordMovement({
+        medicineId: batch.medicineId,
+        batchId: batch._id,
+        type: 'SALE',
+        quantity: -quantity,
+        previousStock: 100,
+        newStock: 100 - quantity,
+        referenceType: 'invoice',
+        referenceId: sale._id,
+        reason: `Test Sale - ${sale.invoiceNumber}`,
+        unitPrice: batch.purchasePrice,
+        purchasePrice: batch.purchasePrice,
+        sellingPrice: unitPrice,
+        totalValue: quantity * batch.purchasePrice,
+      });
+      
+      generatedSales.push(sale);
+    }
+    
+    res.json({
+      success: true,
+      message: `Generated ${generatedSales.length} test sales`,
+      data: {
+        salesCreated: generatedSales.length,
+        medicinesUsed: medicines.length,
+        batchesUsed: batches.length,
+      },
+    });
+  } catch (error) {
+    console.error('❌ Test data generation error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to generate test data',
     });
   }
 };

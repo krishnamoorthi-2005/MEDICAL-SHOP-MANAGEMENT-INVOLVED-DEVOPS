@@ -1,5 +1,5 @@
 import express from 'express';
-import { getReportsAnalytics, getExpiryLossDetails, getSalesTrend, resetExpiryLoss } from '../controllers/reportsController.js';
+import { getReportsAnalytics, getExpiryLossDetails, getSalesTrend, resetExpiryLoss, generateTestData } from '../controllers/reportsController.js';
 import { getDeadStockReport } from '../controllers/reportsController.js';
 
 const router = express.Router();
@@ -12,5 +12,7 @@ router.get('/expiry-details', getExpiryLossDetails);
 // Admin utility to reset expiry-loss analytics
 router.post('/expiry-loss/reset', resetExpiryLoss);
 router.get('/dead-stock', getDeadStockReport);
+// Test data generation endpoint (for development)
+router.post('/generate-test-data', generateTestData);
 
 export default router;

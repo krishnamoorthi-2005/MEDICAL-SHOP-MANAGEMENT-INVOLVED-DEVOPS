@@ -26,13 +26,18 @@ export default function Dashboard() {
   const fetchAnalytics = async () => {
     try {
       const data = await getDashboardAnalytics();
-      setAnalytics(data);
+      if (data && data.todaySummary) {
+        setAnalytics(data);
+      }
+      
       // Fetch dead stock data from unified API so dashboard and reports match
       try {
         const ds = await getDeadStockReport();
         console.log('Dashboard dead stock API response:', ds);
-        setDeadStockCount(ds.totalItems || 0); // Number of unique products
-        setDeadStockBatches(ds.batches || []);
+        if (ds) {
+          setDeadStockCount(ds.totalItems || 0); // Number of unique products
+          setDeadStockBatches(ds.batches || []);
+        }
       } catch (e) {
         console.error('Failed to fetch dead stock for dashboard:', e);
         setDeadStockCount(0);
@@ -40,6 +45,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
+      setAnalytics(null);
     } finally {
       setLoading(false);
     }
@@ -106,17 +112,21 @@ export default function Dashboard() {
       actionText: (summary?.billCount || 0) === 0 ? 'Start by creating a new bill' : '',
       link: '/reports',
       icon: DollarSign,
+      gradient: 'from-indigo-500 to-violet-600',
+      iconBg: 'bg-white/20',
       priority: 'primary'
     },
     {
       label: 'Net Profit',
-      value: loading ? '...' : `₹${summary?.profit?.toLocaleString() || 0}`,
-      change: '-',
-      trend: 'neutral',
-      subtitle: 'Profit margin tracking',
+      value: loading ? '...' : `₹${(summary?.profit ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`,
+      change: summary && summary.profit < 0 ? '⚠️ Loss' : '-',
+      trend: summary && summary.profit < 0 ? 'down' : 'neutral',
+      subtitle: summary && summary.profit < 0 ? 'Operating loss' : 'Profit margin tracking',
       actionText: (summary?.billCount || 0) === 0 ? 'Begin billing to see profit' : '',
       link: '/reports',
       icon: TrendingUp,
+      gradient: (summary && summary.profit < 0) ? 'from-red-500 to-rose-600' : 'from-emerald-500 to-teal-600',
+      iconBg: 'bg-white/20',
       priority: 'secondary'
     },
     {
@@ -128,6 +138,8 @@ export default function Dashboard() {
       actionText: '',
       link: '#',
       icon: AlertTriangle,
+      gradient: deadStockCount > 0 ? 'from-amber-500 to-orange-600' : 'from-slate-400 to-slate-500',
+      iconBg: 'bg-white/20',
       priority: 'tertiary',
       onClick: () => setShowDeadStockModal(true)
     },
@@ -140,6 +152,8 @@ export default function Dashboard() {
       actionText: '',
       link: '/inventory',
       icon: Timer,
+      gradient: (analytics?.expiringSoonCount || 0) > 0 ? 'from-red-500 to-rose-600' : 'from-slate-400 to-slate-500',
+      iconBg: 'bg-white/20',
       priority: 'tertiary'
     }
   ];
@@ -147,78 +161,50 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground/70 font-medium">Real-time overview of your pharmacy operations</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Real-time overview of your pharmacy operations</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Live
+          </span>
+        </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {summaryCards.map((card, index) => {
           const cardContent = (
-            <Card className={cn(
-              "transition-all duration-160 cursor-pointer ease-out",
-              card.priority === 'primary' && "border-2 border-blue-200 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 hover:shadow-2xl hover:-translate-y-1.5 ring-1 ring-blue-100",
-              card.priority === 'secondary' && "border border-emerald-200 shadow-md bg-gradient-to-br from-emerald-50/50 to-green-50/50 hover:shadow-xl hover:-translate-y-1.5",
-              card.priority === 'tertiary' && "border border-border/50 shadow-sm bg-card/80 hover:shadow-lg hover:-translate-y-1"
-            )}>
-              <CardContent className="p-7">
+            <div className={`relative overflow-hidden rounded-2xl p-6 cursor-pointer transition-all duration-200 hover:-translate-y-1.5 hover:shadow-2xl bg-gradient-to-br ${card.gradient}`}
+              style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }}>
+              {/* Background orb */}
+              <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full opacity-20"
+                style={{ background: 'rgba(255,255,255,0.3)' }} />
+              <div className="relative z-10">
                 <div className="flex items-start justify-between mb-4">
-                  <div className={cn(
-                    "text-[11px] font-bold uppercase tracking-wider",
-                    card.priority === 'primary' && "text-blue-700",
-                    card.priority === 'secondary' && "text-emerald-700",
-                    card.priority === 'tertiary' && "text-muted-foreground/70"
-                  )}>
-                    {card.label}
-                  </div>
-                  <div className={cn(
-                    "p-2 rounded-lg",
-                    card.priority === 'primary' && "bg-blue-100",
-                    card.priority === 'secondary' && "bg-emerald-100",
-                    card.priority === 'tertiary' && "bg-muted"
-                  )}>
-                    <card.icon className={cn(
-                      "h-5 w-5",
-                      card.priority === 'primary' && "text-blue-600",
-                      card.priority === 'secondary' && "text-emerald-600",
-                      card.priority === 'tertiary' && "text-muted-foreground/40"
-                    )} />
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-white/70">{card.label}</div>
+                  <div className="p-2 rounded-xl bg-white/20">
+                    <card.icon className="h-4 w-4 text-white" />
                   </div>
                 </div>
-                <div className={cn(
-                  "font-bold tracking-tight mb-3",
-                  card.priority === 'primary' ? "text-4xl text-blue-900" : "text-3xl"
-                )}>
-                  {card.value}
-                </div>
-                <div className="space-y-1">
-                  <div className="text-xs font-medium text-muted-foreground/60">
-                    {card.subtitle}
-                  </div>
-                  {card.actionText && (
-                    <div className={cn(
-                      "text-xs font-semibold",
-                      card.priority === 'primary' ? "text-blue-600" : "text-muted-foreground/70"
-                    )}>
-                      {card.actionText}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                <div className="text-3xl font-extrabold text-white tracking-tight mb-2">{card.value}</div>
+                <div className="text-xs font-medium text-white/70">{card.subtitle}</div>
+                {card.actionText && (
+                  <div className="text-xs font-semibold text-white/80 mt-1">{card.actionText}</div>
+                )}
+              </div>
+            </div>
           );
 
           return (
             <div key={index}>
               {card.onClick ? (
-                <div onClick={card.onClick}>
-                  {cardContent}
-                </div>
+                <div onClick={card.onClick}>{cardContent}</div>
               ) : (
-                <Link to={card.link}>
-                  {cardContent}
-                </Link>
+                <Link to={card.link}>{cardContent}</Link>
               )}
             </div>
           );

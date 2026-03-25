@@ -1,4 +1,10 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const DEFAULT_API_BASE_URL = 'http://localhost:3004/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || DEFAULT_API_BASE_URL;
+
+export const getApiUrl = (path: string) => {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE_URL}${normalizedPath}`;
+};
 
 const getAuthHeaders = (extraHeaders: HeadersInit = {}): HeadersInit => {
   // Only attempt to read localStorage in browser environments
@@ -45,6 +51,7 @@ export interface SaleItem {
 export interface CreateSaleRequest {
   items: SaleItem[];
   customerName?: string;
+  customerId?: string;
   paymentMethod: 'cash' | 'upi' | 'card';
   discountAmount?: number;
   taxAmount?: number;
@@ -241,6 +248,21 @@ export const resetExpiryLoss = async () => {
   return response.json();
 };
 
+// Generate test data for reports (development only)
+export const generateTestData = async () => {
+  const response = await fetch(`${API_BASE_URL}/reports/generate-test-data`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+  });
+
+  if (!response.ok) {
+    await handleAuthError(response, 'Failed to generate test data');
+    throw new Error('Failed to generate test data');
+  }
+
+  return response.json();
+};
+
 // Detailed dead stock report
 export interface DeadStockItem {
   batchId: string;
@@ -269,7 +291,12 @@ export const getDeadStockReport = async () => {
 
   const result = await response.json();
   console.log('Dead stock API response:', result);
-  return result.data as { totalValue: number; totalItems: number; batches: DeadStockItem[] };
+  // Backend returns data at top level: { success: true, totalValue, totalItems, batches }
+  return {
+    totalValue: result.totalValue || 0,
+    totalItems: result.totalItems || 0,
+    batches: result.batches || []
+  } as { totalValue: number; totalItems: number; batches: DeadStockItem[] };
 };
 
 // AI demand prediction (per-medicine)
@@ -776,6 +803,9 @@ export const updateCustomer = async (id: string, data: {
   dateOfBirth?: string;
   notes?: string;
   isActive?: boolean;
+  totalSpent?: number;
+  totalVisits?: number;
+  nextPurchaseDate?: string;
 }) => {
   const response = await fetch(`${API_BASE_URL}/customers/${id}`, {
     method: 'PUT',
@@ -843,6 +873,15 @@ export const getMyCustomerInfo = async (email?: string, phone?: string): Promise
   sales: any[];
   message?: string;
 }> => {
+  if (!email && !phone) {
+    return {
+      success: true,
+      customer: null,
+      sales: [],
+      message: 'No customer identifier available',
+    };
+  }
+
   const params = new URLSearchParams();
   if (email) params.append('email', email);
   if (phone) params.append('phone', phone);
@@ -1421,6 +1460,90 @@ export interface PrescriptionRequest {
   updatedAt: string;
 }
 
+export interface ReminderItem {
+  _id: string;
+  id: string;
+  userId?: string | null;
+  userName: string;
+  userEmail: string;
+  userPhone: string;
+  medicineName: string;
+  dosage?: string;
+  reminderTime: string;
+  repeatMode: 'once' | 'daily' | 'weekly';
+  notes?: string;
+  isActive: boolean;
+  nextRunAt: string;
+  lastSentAt?: string | null;
+  sentCount: number;
+  lastError?: string;
+  whatsappEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getWhatsAppConnectionStatus = async (): Promise<{ connected: boolean; initialized: boolean }> => {
+  const response = await fetch(`${API_BASE_URL}/notifications/status`);
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || 'Failed to fetch WhatsApp status');
+  }
+
+  const result = await response.json();
+  return result.data || { connected: false, initialized: false };
+};
+
+export const getMyReminders = async (): Promise<ReminderItem[]> => {
+  const response = await fetch(`${API_BASE_URL}/reminders/my`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    await handleAuthError(response, 'Failed to fetch reminders');
+    throw new Error('Failed to fetch reminders');
+  }
+
+  const result = await response.json();
+  return result.data || [];
+};
+
+export const createReminder = async (data: {
+  medicineName: string;
+  dosage?: string;
+  reminderTime: string;
+  repeatMode: 'once' | 'daily' | 'weekly';
+  notes?: string;
+  userPhone: string;
+}): Promise<{ success: boolean; message?: string; data: ReminderItem }> => {
+  const response = await fetch(`${API_BASE_URL}/reminders`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || 'Failed to create reminder');
+  }
+
+  return response.json();
+};
+
+export const deleteReminder = async (id: string) => {
+  const response = await fetch(`${API_BASE_URL}/reminders/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || 'Failed to delete reminder');
+  }
+
+  return response.json();
+};
+
 export const submitPrescription = async (data: {
   patientName: string;
   patientPhone: string;
@@ -1429,25 +1552,59 @@ export const submitPrescription = async (data: {
   medicines: PrescriptionMedicine[];
   imageFile?: File | null;
 }): Promise<{ success: boolean; request: PrescriptionRequest }> => {
-  const formData = new FormData();
-  formData.append('patientName', data.patientName);
-  formData.append('patientPhone', data.patientPhone);
-  if (data.patientEmail) formData.append('patientEmail', data.patientEmail);
-  if (data.doctorName) formData.append('doctorName', data.doctorName);
-  formData.append('medicines', JSON.stringify(data.medicines));
-  if (data.imageFile) formData.append('prescriptionImage', data.imageFile);
+  try {
+    // Validate image file
+    if (!data.imageFile) {
+      throw new Error('Prescription image is required. Please upload an image.');
+    }
 
-  const response = await fetch(`${API_BASE_URL}/prescriptions`, {
-    method: 'POST',
-    body: formData,
-  });
+    const formData = new FormData();
+    formData.append('patientName', data.patientName);
+    formData.append('patientPhone', data.patientPhone);
+    if (data.patientEmail) formData.append('patientEmail', data.patientEmail);
+    if (data.doctorName) formData.append('doctorName', data.doctorName);
+    formData.append('medicines', JSON.stringify(data.medicines));
+    formData.append('prescriptionImage', data.imageFile);
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to submit prescription');
+    console.log('[API] Submitting prescription to:', `${API_BASE_URL}/prescriptions`);
+    console.log('[API] Form data keys:', Array.from(formData.keys()));
+
+    const response = await fetch(`${API_BASE_URL}/prescriptions`, {
+      method: 'POST',
+      body: formData,
+      // Don't set Content-Type header - browser will set it with boundary
+    });
+
+    console.log('[API] Response status:', response.status);
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to submit prescription';
+      try {
+        const error = await response.json();
+        errorMessage = error.message || errorMessage;
+      } catch (parseErr) {
+        // If response is not JSON, use status text
+        errorMessage = `${response.status} ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log('[API] Prescription submitted successfully:', result);
+    return result;
+  } catch (err) {
+    // Enhanced error messaging
+    let errorMsg = 'Failed to submit prescription';
+    
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      errorMsg = `Network Error: Could not reach backend at ${API_BASE_URL}. Make sure the backend server is running.`;
+    } else if (err instanceof Error) {
+      errorMsg = err.message;
+    }
+
+    console.error('[API] Prescription submission error:', errorMsg);
+    throw new Error(errorMsg);
   }
-
-  return response.json();
 };
 
 // Get user's own prescriptions by phone or email
@@ -1455,11 +1612,16 @@ export const getMyPrescriptions = async (phoneOrEmail: string): Promise<Prescrip
   const response = await fetch(`${API_BASE_URL}/prescriptions/my/${encodeURIComponent(phoneOrEmail)}`);
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to fetch prescriptions');
+    const errorText = await response.text().catch(() => '');
+    try {
+      const error = errorText ? JSON.parse(errorText) : null;
+      throw new Error(error?.message || 'Failed to fetch prescriptions');
+    } catch {
+      throw new Error(errorText || 'Failed to fetch prescriptions');
+    }
   }
 
-  const result = await response.json();
+  const result = await response.json().catch(() => ({}));
   return result.requests || [];
 };
 
@@ -1532,6 +1694,66 @@ export const deletePrescription = async (id: string): Promise<{ success: boolean
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || 'Failed to delete prescription');
+  }
+
+  return response.json();
+};
+
+// ============ STOCK NOTIFICATIONS ============
+
+export interface StockItem {
+  name: string;
+  qty: number;
+  minLevel?: number;
+  daysLeft?: number;
+  batches?: number;
+}
+
+export interface StockSnapshot {
+  healthy: StockItem[];
+  lowStock: StockItem[];
+  expiringSoon: StockItem[];
+  expired: StockItem[];
+  total: number;
+}
+
+export const getStockNotificationPreview = async (): Promise<StockSnapshot | null> => {
+  const response = await fetch(`${API_BASE_URL}/notifications/stock-preview`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    await handleAuthError(response, 'Failed to fetch stock notification preview');
+    throw new Error('Failed to fetch stock notification preview');
+  }
+
+  const result = await response.json();
+  return result.data;
+};
+
+export const sendStockSMS = async () => {
+  const response = await fetch(`${API_BASE_URL}/notifications/send-sms`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to send SMS');
+  }
+
+  return response.json();
+};
+
+export const sendStockWhatsApp = async () => {
+  const response = await fetch(`${API_BASE_URL}/notifications/send-whatsapp`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to send WhatsApp message');
   }
 
   return response.json();

@@ -5,60 +5,36 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    /* Sophisticated blue-gray background with depth */
     --background: 220 18% 97%;
     --foreground: 222 47% 11%;
-
-    /* Premium card colors with subtle warmth */
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-
-    /* Rich professional green primary */
-    --primary: 160 84% 39%;
+    --primary: 239 84% 67%;
     --primary-foreground: 0 0% 100%;
-
-    /* Soft secondary with slight blue tint */
     --secondary: 214 32% 91%;
     --secondary-foreground: 222 47% 11%;
-
-    /* Refined muted tones */
     --muted: 217 20% 94%;
     --muted-foreground: 215 16% 47%;
-
-    /* Accent with medical green undertone */
-    --accent: 152 60% 53%;
+    --accent: 239 84% 67%;
     --accent-foreground: 0 0% 100%;
-
-    /* Professional destructive red */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-
-    /* Softer borders for depth */
     --border: 217 20% 88%;
     --input: 217 20% 88%;
-    --ring: 160 84% 39%;
-
-    --radius: 0.5rem;
-
+    --ring: 239 84% 67%;
+    --radius: 0.625rem;
     --sidebar-background: 220 18% 98%;
     --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary: 239 84% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 20% 94%;
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 217 20% 88%;
-    --sidebar-ring: 160 84% 39%;
-    
-    /* Success and warning colors for medical context */
+    --sidebar-ring: 239 84% 67%;
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
@@ -70,39 +46,31 @@ All colors MUST be HSL.
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 160 84% 39%;
+    --primary: 239 84% 67%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary: 239 84% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 160 84% 39%;
+    --sidebar-ring: 239 84% 67%;
   }
 }
 
@@ -118,136 +86,187 @@ All colors MUST be HSL.
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.011em;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', 'Inter', sans-serif;
     font-weight: 700;
     letter-spacing: -0.02em;
   }
-  
-  /* Smooth cursor feedback on interactive elements */
+
   button, a, [role="button"], input[type="checkbox"], input[type="radio"] {
     cursor: pointer;
   }
+
+  /* Smooth scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: hsl(217 20% 82%); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(217 20% 70%); }
 }
 
 @layer utilities {
-  .micro-interaction {
-    @apply transition-all duration-150 ease-in-out;
+  .micro-interaction { @apply transition-all duration-150 ease-in-out; }
+  .card-hover { @apply hover:-translate-y-0.5 hover:shadow-sm transition-all duration-150; }
+  .table-row-hover { @apply hover:bg-muted/30 transition-colors duration-150; }
+  .hover-lift { @apply transition-all duration-150 ease-out; }
+  .hover-lift:hover { @apply -translate-y-1 shadow-lg; }
+  .focus-glow:focus { @apply ring-2 ring-primary/20 border-primary/50; }
+
+  /* Page header gradient accent bar */
+  .page-header-accent {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
   }
 
-  .card-hover {
-    @apply hover:-translate-y-0.5 hover:shadow-sm transition-all duration-150;
+  /* Shimmer animation for loading states */
+  .shimmer {
+    background: linear-gradient(90deg, hsl(217 20% 94%) 25%, hsl(217 20% 88%) 50%, hsl(217 20% 94%) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
   }
 
-  .table-row-hover {
-    @apply hover:bg-muted/30 transition-colors duration-150;
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
-  
-  /* Premium hover lift effect */
-  .hover-lift {
-    @apply transition-all duration-150 ease-out;
+
+  /* Fade up animation */
+  .animate-fade-up {
+    animation: fadeUp 0.3s ease-out;
   }
-  
-  .hover-lift:hover {
-    @apply -translate-y-1 shadow-lg;
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-  
-  /* Smooth focus states */
-  .focus-glow:focus {
-    @apply ring-2 ring-primary/20 border-primary/50;
+
+  /* Shimmer text for branding */
+  .shimmer-text {
+    background: linear-gradient(90deg, #a5b4fc, #c4b5fd, #67e8f9, #a5b4fc);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmerText 3s linear infinite;
+  }
+
+  @keyframes shimmerText {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
   }
 }
 
 @layer components {
-  /* Global smooth transitions for premium feel */
-  * {
-    @apply transition-colors duration-150;
-  }
-  
-  /* Enhanced depth layering */
-  .card-depth-1 {
-    @apply shadow-sm;
-  }
-  
-  .card-depth-2 {
-    @apply shadow-md;
-  }
-  
-  .card-depth-3 {
-    @apply shadow-lg;
-  }
+  /* Smooth transitions globally */
+  * { @apply transition-colors duration-150; }
 
-  /* Enterprise-grade card styling with depth */
+  /* Professional card variants */
+  .card-depth-1 { @apply shadow-sm; }
+  .card-depth-2 { @apply shadow-md; }
+  .card-depth-3 { @apply shadow-lg; }
+
   .enterprise-card {
-    @apply border border-border/50 bg-card shadow-md transition-all duration-160;
+    @apply border border-border/50 bg-card shadow-sm rounded-xl transition-all duration-200;
   }
-  
   .enterprise-card:hover {
-    @apply shadow-xl -translate-y-1 border-border/80;
+    @apply shadow-md -translate-y-0.5 border-border/80;
   }
 
-  /* Premium typography hierarchy */
-  .title-primary {
-    @apply font-semibold tracking-tight;
+  /* Page section header */
+  .page-section-header {
+    @apply flex items-center justify-between mb-6;
   }
 
-  .title-section {
-    @apply font-semibold tracking-tight;
+  .page-title {
+    @apply text-2xl font-bold tracking-tight text-foreground;
   }
 
-  .label-muted {
-    @apply text-muted-foreground/80 font-medium;
+  .page-subtitle {
+    @apply text-sm text-muted-foreground mt-0.5;
   }
 
-  .value-prominent {
-    @apply font-bold tracking-tight;
+  /* Stat card */
+  .stat-card {
+    @apply bg-white rounded-xl border border-border/60 shadow-sm p-5 transition-all duration-200;
+  }
+  .stat-card:hover {
+    @apply shadow-md -translate-y-0.5;
   }
 
-  /* Refined hover states with subtle elevation */
-  .btn-premium-hover {
-    @apply transition-all duration-150 hover:brightness-95 hover:shadow-sm;
+  /* Premium table */
+  .table-premium thead tr {
+    @apply bg-slate-50/80 border-b border-border/60;
+  }
+  .table-premium thead th {
+    @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3;
+  }
+  .table-premium tbody tr {
+    @apply border-b border-border/30 transition-colors duration-100;
+  }
+  .table-premium tbody tr:hover {
+    @apply bg-slate-50/60;
+  }
+  .table-premium tbody tr:last-child {
+    @apply border-b-0;
   }
 
-  .nav-link-transition {
-    @apply transition-all duration-150;
-  }
+  /* Status badges */
+  .badge-success { @apply bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold; }
+  .badge-warning { @apply bg-amber-50 text-amber-700 border border-amber-200 font-semibold; }
+  .badge-danger  { @apply bg-red-50 text-red-700 border border-red-200 font-semibold; }
+  .badge-info    { @apply bg-blue-50 text-blue-700 border border-blue-200 font-semibold; }
+  .badge-neutral { @apply bg-slate-50 text-slate-600 border border-slate-200 font-semibold; }
 
-  /* Enhanced table rows with smooth interaction */
-  .table-row-premium {
-    @apply transition-all duration-140 hover:bg-muted/40 hover:shadow-sm cursor-pointer;
-  }
-
-  /* Command center feeling */
-  .dashboard-metric {
-    @apply transition-all duration-160 hover:shadow-lg hover:-translate-y-1;
-  }
-  
-  /* Premium input focus with subtle glow */
+  /* Premium input */
   .input-premium:focus {
     @apply border-primary/50 ring-2 ring-primary/10 outline-none;
   }
-  
-  /* Interactive card with depth */
+
+  /* Interactive card */
   .interactive-card {
-    @apply transition-all duration-160 cursor-pointer;
+    @apply transition-all duration-200 cursor-pointer rounded-xl;
   }
-  
   .interactive-card:hover {
     @apply -translate-y-1 shadow-lg;
   }
-  
-  /* Smooth button interactions */
+
+  /* Smooth button */
   .btn-smooth {
     @apply transition-all duration-150 active:scale-[0.98];
   }
-  
-  /* Navigation item premium hover */
+
+  /* Nav item */
   .nav-item-premium {
-    @apply transition-all duration-150 rounded-sm;
+    @apply transition-all duration-150 rounded-lg;
   }
-  
   .nav-item-premium:hover {
     @apply bg-muted/30;
   }
+
+  /* Gradient accent line for cards */
+  .card-accent-top {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-accent-top::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4);
+    border-radius: 99px 99px 0 0;
+  }
+
+  /* Dashboard metric card */
+  .dashboard-metric {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  /* Title typography */
+  .title-primary { @apply font-semibold tracking-tight; }
+  .title-section { @apply font-semibold tracking-tight; }
+  .label-muted { @apply text-muted-foreground/80 font-medium; }
+  .value-prominent { @apply font-bold tracking-tight; }
+  .btn-premium-hover { @apply transition-all duration-150 hover:brightness-95 hover:shadow-sm; }
+  .nav-link-transition { @apply transition-all duration-150; }
+  .table-row-premium { @apply transition-all duration-140 hover:bg-muted/40 hover:shadow-sm cursor-pointer; }
 }

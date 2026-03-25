@@ -121,9 +121,28 @@ export default function Customers() {
     const customerUsers = users.filter((u) => u.role.toLowerCase() === 'user' || u.role.toLowerCase() === 'patient');
 
     // Attach AppUser flags to existing customers
-    let displayCustomers = customers.map(c => {
+    let displayCustomers: (Customer & { isAppUser?: boolean })[] = customers.map(c => {
         const isAppUser = customerUsers.some(u => u.email && c.email && u.email.toLowerCase() === c.email.toLowerCase());
         return { ...c, isAppUser: c.isAppUser || isAppUser };
+    });
+
+    // Also include app users who don't yet have a Customer record (e.g. signed up but no purchase yet)
+    customerUsers.forEach(u => {
+        const alreadyInList = displayCustomers.some(
+            c => c.email && u.email && c.email.toLowerCase() === u.email.toLowerCase()
+        );
+        if (!alreadyInList) {
+            displayCustomers.push({
+                _id: u.id,
+                name: u.name,
+                email: u.email,
+                phone: '',
+                isActive: u.status === 'active',
+                totalSpent: 0,
+                totalVisits: 0,
+                isAppUser: true,
+            } as any);
+        }
     });
 
     if (searchQuery) {
@@ -277,12 +296,12 @@ export default function Customers() {
     return (
         <div className="space-y-6 max-w-6xl">
             {/* Page Header */}
-            <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+            <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                    <h1 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-                        <Users className="h-5 w-5 text-indigo-500" /> Users & Customers
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                        <Users className="h-6 w-6 text-indigo-500" /> Users & Customers
                     </h1>
-                    <p className="text-sm text-slate-400 font-medium mt-0.5">
+                    <p className="text-sm text-muted-foreground mt-0.5">
                         Manage your store customers and system staff
                     </p>
                 </div>
@@ -310,88 +329,97 @@ export default function Customers() {
                         </Button>
                     </div>
 
-                    <Card className="border-slate-200 shadow-sm overflow-hidden">
+                    <Card className="border border-border/60 shadow-sm overflow-hidden rounded-xl">
                         <CardContent className="p-0">
                             <Table>
-                                <TableHeader className="bg-slate-50/50 border-b border-slate-100">
-                                    <TableRow className="hover:bg-transparent">
-                                        <TableHead className="pl-6 font-semibold text-slate-600">Name</TableHead>
-                                        <TableHead className="font-semibold text-slate-600">Contact</TableHead>
-                                        <TableHead className="font-semibold text-slate-600">Status</TableHead>
-                                        <TableHead className="font-semibold text-slate-600">Visits</TableHead>
-                                        <TableHead className="font-semibold text-slate-600">Total Spent</TableHead>
-                                        <TableHead className="text-right pr-6 font-semibold text-slate-600">Actions</TableHead>
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50/80 hover:bg-slate-50/80 border-b border-border/60">
+                                        <TableHead className="pl-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Name</TableHead>
+                                        <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Contact</TableHead>
+                                        <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Status</TableHead>
+                                        <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Visits</TableHead>
+                                        <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Total Spent</TableHead>
+                                        <TableHead className="text-right pr-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {loadingCustomers || loadingUsers ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                                                Loading customers...
+                                            <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <div className="h-8 w-8 rounded-full border-2 border-indigo-300 border-t-indigo-600 animate-spin" />
+                                                    <span className="text-sm">Loading customers...</span>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ) : displayCustomers.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                                                No customers found
+                                            <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <Users className="h-10 w-10 text-muted-foreground/30" />
+                                                    <span className="text-sm font-medium">No customers found</span>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ) : (
                                         displayCustomers.map((customer) => (
-                                            <TableRow key={customer._id} className="hover:bg-slate-50/50 transition-colors">
+                                            <TableRow key={customer._id} className="border-b border-border/30 hover:bg-slate-50/60 transition-colors">
                                                 <TableCell className="font-medium pl-6">
                                                     <div className="flex items-center gap-2">
-                                                        {customer.name}
-                                                        {customer.isAppUser && <Badge variant="secondary" className="text-[10px] uppercase">App User</Badge>}
-                                                    </div>
-                                                    {customer.dateOfBirth && (
-                                                        <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                                                            <Calendar className="h-3 w-3" />
-                                                            {format(new Date(customer.dateOfBirth), 'PPP')}
+                                                        <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold flex-shrink-0">
+                                                            {customer.name.charAt(0).toUpperCase()}
                                                         </div>
-                                                    )}
+                                                        <div>
+                                                            <div className="font-semibold text-sm flex items-center gap-1.5">
+                                                                {customer.name}
+                                                                {customer.isAppUser && <Badge variant="secondary" className="text-[10px] uppercase px-1.5 py-0 bg-indigo-50 text-indigo-600 border-indigo-200">App User</Badge>}
+                                                            </div>
+                                                            {customer.dateOfBirth && (
+                                                                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                                                    <Calendar className="h-3 w-3" />
+                                                                    {format(new Date(customer.dateOfBirth), 'PPP')}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="space-y-1 text-sm">
-                                                        <div className="flex items-center gap-2">
+                                                        <div className="flex items-center gap-1.5 text-slate-700">
                                                             <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                                                             {customer.phone}
                                                         </div>
                                                         {customer.email && (
-                                                            <div className="flex items-center gap-2 text-muted-foreground">
-                                                                <Mail className="h-3.5 w-3.5" />
+                                                            <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                                                                <Mail className="h-3 w-3" />
                                                                 {customer.email}
                                                             </div>
                                                         )}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Badge
-                                                        variant={customer.isActive ? 'default' : 'secondary'}
-                                                        className={customer.isActive ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}
-                                                    >
+                                                    <Badge className={customer.isActive ? 'badge-success' : 'badge-neutral'}>
                                                         {customer.isActive ? 'Active' : 'Inactive'}
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="font-medium">{customer.totalVisits}</div>
+                                                    <div className="font-semibold text-sm">{customer.totalVisits || 0}</div>
                                                     <div className="text-xs text-muted-foreground">
                                                         Last: {customer.lastVisit ? format(new Date(customer.lastVisit), 'PP') : 'N/A'}
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="font-semibold text-emerald-600">
-                                                    ₹{customer.totalSpent?.toFixed(2) || '0.00'}
+                                                <TableCell>
+                                                    <span className="font-semibold text-emerald-600">₹{customer.totalSpent?.toFixed(2) || '0.00'}</span>
                                                 </TableCell>
                                                 <TableCell className="text-right pr-6">
-                                                    <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            variant="destructive"
-                                                            size="sm"
-                                                            onClick={() => handleDeleteCustomer(customer._id)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleDeleteCustomer(customer._id)}
+                                                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))
@@ -409,17 +437,17 @@ export default function Customers() {
                         </Button>
                     </div>
 
-                    <Card>
+                    <Card className="border border-border/60 shadow-sm overflow-hidden rounded-xl">
                         <CardContent className="p-0">
                             <Table>
                                 <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="pl-6">Name</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Role</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Created</TableHead>
-                                        <TableHead className="text-right pr-6">Actions</TableHead>
+                                    <TableRow className="bg-slate-50/80 hover:bg-slate-50/80 border-b border-border/60">
+                                        <TableHead className="pl-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Name</TableHead>
+                                        <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Email</TableHead>
+                                        <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Role</TableHead>
+                                        <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Status</TableHead>
+                                        <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Created</TableHead>
+                                        <TableHead className="text-right pr-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>

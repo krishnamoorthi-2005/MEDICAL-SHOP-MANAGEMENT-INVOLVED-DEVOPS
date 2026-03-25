@@ -5,6 +5,7 @@ import Medicine from '../models/Medicine.js';
 import Supplier from '../models/Supplier.js';
 import Batch from '../models/Batch.js';
 import StockMovement from '../models/StockMovement.js';
+import StockLedger from '../models/StockLedger.js';
 import Sale from '../models/Sale.js';
 import Purchase from '../models/Purchase.js';
 import WriteOffLog from '../models/WriteOffLog.js';
@@ -229,12 +230,101 @@ const initializeDatabase = async () => {
     await StockMovement.create({
       medicineId: medicine._id,
       batchId: batch._id,
-      type: 'purchase',
+      type: 'PURCHASE',
       quantity: 500,
       referenceType: 'po',
       previousStock: 0,
-      newStock: 500
+      newStock: 500,
+      purchasePrice: 5,
+      unitPrice: 5,
+      totalValue: 2500
     });
+
+    // Create sample sales data (today's sales and past sales for trends)
+    const adminUser = await User.findOne({ username: 'admin' });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Today's sales
+    const todaySale = await Sale.create({
+      invoiceNumber: `INV-${Date.now()}`,
+      customerId: null,
+      items: [
+        {
+          medicineId: medicine._id,
+          batchId: batch._id,
+          medicineName: medicine.name,
+          quantity: 10,
+          unitPrice: 20,
+          lineTotal: 200
+        }
+      ],
+      subtotal: 200,
+      taxAmount: 24,
+      discountAmount: 0,
+      total: 224,
+      paymentMethod: 'cash',
+      paymentStatus: 'paid',
+      userId: adminUser?._id,
+      createdAt: today,
+      updatedAt: today
+    });
+
+    // Past 6 days sales for trend data
+    for (let i = 1; i <= 6; i++) {
+      const pastDate = new Date(today);
+      pastDate.setDate(pastDate.getDate() - i);
+      const qty = 5 + i;
+      const lineTotal = qty * 20;
+      const taxAmount = (lineTotal * 12) / 100;
+      
+      await Sale.create({
+        invoiceNumber: `INV-PAST-${i}-${Date.now()}`,
+        customerId: null,
+        items: [
+          {
+            medicineId: medicine._id,
+            batchId: batch._id,
+            medicineName: medicine.name,
+            quantity: qty,
+            unitPrice: 20,
+            lineTotal: lineTotal
+          }
+        ],
+        subtotal: lineTotal,
+        taxAmount: taxAmount,
+        discountAmount: 0,
+        total: lineTotal + taxAmount,
+        paymentMethod: 'cash',
+        paymentStatus: 'paid',
+        userId: adminUser?._id,
+        createdAt: pastDate,
+        updatedAt: pastDate
+      });
+    }
+
+    // Create stock ledger entries for sales
+    const salesQuery = await Sale.find().sort({ createdAt: -1 }).limit(7).lean();
+    for (const sale of salesQuery) {
+      for (const item of sale.items) {
+        await StockLedger.create({
+          medicineId: item.medicineId,
+          batchId: item.batchId,
+          type: 'SALE',
+          quantity: -item.quantity,
+          purchasePrice: 10,  // Cost price
+          sellingPrice: item.unitPrice,
+          totalValue: -(item.lineTotal),
+          referenceId: sale._id,
+          referenceType: 'sale',
+          previousStock: 500,
+          newStock: 500 - item.quantity,
+          description: `Sale ${sale.invoiceNumber}`,
+          createdAt: sale.createdAt,
+          updatedAt: sale.createdAt
+        });
+      }
+    }
 
     console.log('✅ Sample data created successfully\n');
 

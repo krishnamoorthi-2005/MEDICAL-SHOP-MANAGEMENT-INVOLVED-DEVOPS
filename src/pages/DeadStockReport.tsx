@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Download, PackageX } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -88,71 +88,65 @@ export default function DeadStockReport() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-xl">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <PackageX className="h-6 w-6 text-gray-600" />
+              <PackageX className="h-6 w-6 text-slate-500" />
               Dead Stock Report
             </h1>
-            <p className="text-muted-foreground/70 font-medium">
+            <p className="text-sm text-muted-foreground mt-0.5">
               Batches with stock on hand but no sales in the last 7 days
             </p>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-xs text-muted-foreground">Total Dead Stock Items</div>
-          <div className="text-2xl font-semibold">{totalItems.toLocaleString()}</div>
+        <div className="text-right p-4 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-sm">
+          <div className="text-xs text-slate-300 font-medium">Total Dead Stock Items</div>
+          <div className="text-2xl font-bold">{totalItems.toLocaleString()}</div>
         </div>
       </div>
 
-      <Card className="micro-interaction">
-        <CardHeader className="flex flex-row items-center justify-between gap-4">
+      {/* AI Purchase Recommendations */}
+      <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-border/40 bg-slate-50/50 flex items-center justify-between">
           <div>
-            <CardTitle className="text-base">AI Purchase Recommendations</CardTitle>
-            <CardDescription>
-              Trained on real sales from the stock ledger to forecast next month demand per medicine.
-            </CardDescription>
+            <h2 className="font-semibold text-foreground">AI Purchase Recommendations</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Trained on real sales from the stock ledger to forecast next month demand per medicine.</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleDownloadCsv}
-              disabled={csvDownloading}
-            >
+            <Button size="sm" variant="outline" onClick={handleDownloadCsv} disabled={csvDownloading}>
               <Download className="h-4 w-4 mr-1" />
               {csvDownloading ? 'Downloading…' : 'Download CSV'}
             </Button>
-            <Button size="sm" onClick={handleRunPrediction} disabled={predictionLoading}>
+            <Button size="sm" onClick={handleRunPrediction} disabled={predictionLoading} style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }} className="text-white">
               {predictionLoading ? 'Running…' : 'Run Prediction'}
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="p-6">
           {predictionError && (
-            <p className="text-xs text-red-500 mb-2">{predictionError}</p>
+            <p className="text-xs text-red-500 mb-4">{predictionError}</p>
           )}
           {predictions.length > 0 ? (
-            <div className="overflow-auto max-h-[50vh] border rounded-md">
+            <div className="overflow-auto max-h-[50vh] rounded-xl border border-border/50">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Medicine</TableHead>
-                    <TableHead className="text-right">
+                  <TableRow className="bg-slate-50/80">
+                    <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Medicine</TableHead>
+                    <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
                       {predictionMetadata?.monthName && predictionMetadata?.previousYear
                         ? `${predictionMetadata.monthName} ${predictionMetadata.previousYear} Sales`
                         : 'Previous Year Sales'}
                     </TableHead>
-                    <TableHead className="text-right">Current Stock</TableHead>
-                    <TableHead className="text-right">Recommended Purchase</TableHead>
-                    <TableHead className="text-right">Confidence</TableHead>
+                    <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Current Stock</TableHead>
+                    <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Recommended Purchase</TableHead>
+                    <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Confidence</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {predictions.map((p) => (
-                    <TableRow key={p.medicineId}>
+                    <TableRow key={p.medicineId} className="hover:bg-slate-50/60">
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium text-sm">{p.medicineName || 'Unknown'}</span>
@@ -161,11 +155,9 @@ export default function DeadStockReport() {
                       </TableCell>
                       <TableCell className="text-right">{(p.previousSales || 0).toLocaleString()}</TableCell>
                       <TableCell className="text-right font-medium">{p.currentStock.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-semibold">{p.recommendedPurchase.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-semibold text-indigo-600">{p.recommendedPurchase.toLocaleString()}</TableCell>
                       <TableCell className="text-right text-xs">
-                        {typeof p.confidence === 'number'
-                          ? `${Math.round(p.confidence * 100)}%`
-                          : '-'}
+                        {typeof p.confidence === 'number' ? `${Math.round(p.confidence * 100)}%` : '-'}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -173,49 +165,43 @@ export default function DeadStockReport() {
               </Table>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Click "Run Prediction" to generate AI-based purchase recommendations per medicine.
-            </p>
+            <div className="text-center py-10 text-muted-foreground">
+              <p className="text-sm">Click "Run Prediction" to generate AI-based purchase recommendations per medicine.</p>
+            </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card className="micro-interaction">
-        <CardHeader>
-          <CardTitle className="text-base">Dead Stock Batches</CardTitle>
-          <CardDescription>
+      {/* Dead Stock Batches */}
+      <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-border/40 bg-slate-50/50">
+          <h2 className="font-semibold text-foreground">Dead Stock Batches</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
             {loading
               ? 'Loading dead stock details…'
               : items.length === 0
               ? 'No dead stock batches found'
               : `${items.length} batch${items.length === 1 ? '' : 'es'} currently considered dead stock`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div className="p-6">
           {loading ? (
-            <div className="h-72 flex items-center justify-center flex-col border-2 border-dashed rounded-lg border-muted">
+            <div className="h-72 flex items-center justify-center flex-col border-2 border-dashed rounded-xl border-muted">
               <p className="text-muted-foreground font-medium">Loading…</p>
             </div>
           ) : items.length === 0 ? (
-            <div className="h-72 flex items-center justify-center flex-col border-2 border-dashed rounded-lg border-muted">
+            <div className="h-72 flex items-center justify-center flex-col border-2 border-dashed rounded-xl border-muted">
               <p className="text-muted-foreground font-medium">No dead stock currently detected</p>
               <p className="text-xs text-muted-foreground mt-1">Batches will appear here once they remain unsold for 90+ days.</p>
             </div>
           ) : (
-            <div className="overflow-auto max-h-[70vh]">
+            <div className="overflow-auto max-h-[70vh] rounded-xl border border-border/50">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Medicine</TableHead>
-                    <TableHead>Batch</TableHead>
-                    <TableHead>Expiry</TableHead>
-                    <TableHead className="text-right">Qty Remaining</TableHead>
-                    <TableHead className="text-right">Purchase Price</TableHead>
-                    <TableHead className="text-right">Total Value</TableHead>
-                    <TableHead>Last Sold</TableHead>
-                    <TableHead>Days Unsold</TableHead>
-                    <TableHead>Supplier</TableHead>
-                    <TableHead>Rack</TableHead>
+                  <TableRow className="bg-slate-50/80">
+                    {['Medicine', 'Batch', 'Expiry', 'Qty Remaining', 'Purchase Price', 'Total Value', 'Last Sold', 'Days Unsold', 'Supplier', 'Rack'].map(h => (
+                      <TableHead key={h} className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{h}</TableHead>
+                    ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -223,17 +209,21 @@ export default function DeadStockReport() {
                     const expiry = item.expiryDate ? new Date(item.expiryDate) : null;
                     const lastSold = item.lastSoldDate ? new Date(item.lastSoldDate) : null;
                     return (
-                      <TableRow key={item.batchId}>
+                      <TableRow key={item.batchId} className="hover:bg-slate-50/60">
                         <TableCell className="font-medium">{item.medicineName}</TableCell>
-                        <TableCell>{item.batchNumber}</TableCell>
-                        <TableCell>{expiry ? expiry.toLocaleDateString() : '-'}</TableCell>
-                        <TableCell className="text-right">{item.quantity}</TableCell>
-                        <TableCell className="text-right">₹{item.purchasePrice.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">₹{item.totalValue.toFixed(2)}</TableCell>
-                        <TableCell>{lastSold ? lastSold.toLocaleDateString() : 'Never Sold'}</TableCell>
-                        <TableCell>{typeof item.daysUnsold === 'number' ? `${item.daysUnsold} days` : 'Never Sold'}</TableCell>
-                        <TableCell>{item.supplierName || '-'}</TableCell>
-                        <TableCell>{item.rackLocation || '-'}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{item.batchNumber}</TableCell>
+                        <TableCell className="text-sm">{expiry ? expiry.toLocaleDateString() : '-'}</TableCell>
+                        <TableCell className="text-sm font-semibold">{item.quantity}</TableCell>
+                        <TableCell className="text-sm">₹{item.purchasePrice.toFixed(2)}</TableCell>
+                        <TableCell className="text-sm font-semibold text-slate-700">₹{item.totalValue.toFixed(2)}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{lastSold ? lastSold.toLocaleDateString() : 'Never Sold'}</TableCell>
+                        <TableCell className="text-sm">
+                          {typeof item.daysUnsold === 'number' ? (
+                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">{item.daysUnsold} days</Badge>
+                          ) : 'Never Sold'}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{item.supplierName || '-'}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{item.rackLocation || '-'}</TableCell>
                       </TableRow>
                     );
                   })}
@@ -241,8 +231,8 @@ export default function DeadStockReport() {
               </Table>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
