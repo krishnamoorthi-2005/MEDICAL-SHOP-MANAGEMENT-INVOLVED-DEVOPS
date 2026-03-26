@@ -18,7 +18,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3004/api';
 
 /* ── status helpers ─────────────────────────────────────── */
 const STATUS = {
