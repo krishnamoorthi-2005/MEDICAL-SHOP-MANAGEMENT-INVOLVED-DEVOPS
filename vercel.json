@@ -7,10 +7,8 @@
   },
   "functions": {
     "api/index.js": {
-      "runtime": "nodejs18.x",
       "memory": 512,
-      "maxDuration": 30,
-      "includeFiles": "api/**"
+      "maxDuration": 30
     }
   },
   "routes": [
