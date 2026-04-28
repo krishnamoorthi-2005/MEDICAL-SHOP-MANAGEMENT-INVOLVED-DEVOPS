@@ -1,0 +1,101 @@
+pipeline {
+    agent any
+    
+    environment {
+        // AWS ECR Registry Configuration
+        BACKEND_REGISTRY = "181527945211.dkr.ecr.us-east-1.amazonaws.com/devops-demo"
+        FRONTEND_REGISTRY = "181527945211.dkr.ecr.us-east-1.amazonaws.com/devops-frontend"
+        // Use Jenkins build number for unique image tags
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout code from Git
+                checkout scm
+            }
+        }
+        
+        stage('Build Docker Images') {
+            parallel {
+                stage('Build Backend') {
+                    steps {
+                        script {
+                            echo "Building Backend Docker Image: ${BACKEND_REGISTRY}:${IMAGE_TAG}"
+                            sh "docker build -t ${BACKEND_REGISTRY}:${IMAGE_TAG} ../backend"
+                        }
+                    }
+                }
+                stage('Build Frontend') {
+                    steps {
+                        script {
+                            echo "Building Frontend Docker Image: ${FRONTEND_REGISTRY}:${IMAGE_TAG}"
+                            sh "docker build -t ${FRONTEND_REGISTRY}:${IMAGE_TAG} ../"
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Push Images to Registry') {
+            steps {
+                script {
+                    echo "Pushing Docker Images to ECR"
+                    // Connects to AWS ECR using instance IAM role or configure aws CLI
+                    sh "aws ecr get-login-password | docker login --username AWS --password-stdin 181527945211.dkr.ecr.us-east-1.amazonaws.com"
+                    sh "docker push ${BACKEND_REGISTRY}:${IMAGE_TAG}"
+                    sh "docker push ${FRONTEND_REGISTRY}:${IMAGE_TAG}"
+                }
+            }
+        }
+        
+        stage('Terraform Provision Infrastructure') {
+            steps {
+                dir('infra') {
+                    echo "Initializing Terraform and Appling Changes"
+                    sh 'terraform init'
+                    // Apply, auto-approving, and passing the new image tag so K8s can use it if configured via local-exec
+                    sh "terraform apply -auto-approve -var image_tag=${IMAGE_TAG}"
+                }
+            }
+        }
+        
+        stage('Deploy to Kubernetes') {
+            steps {
+                dir('k8s') {
+                    echo "Deploying application to Kubernetes cluster"
+                    // In a real environment, you'd configure kubeconfig via Jenkins credentials here
+                    script {
+                        // Replace TAG in deployment and apply
+                        sh "sed -i 's/\\\${IMAGE_TAG}/${IMAGE_TAG}/g' deployment.yaml"
+                        sh "kubectl apply -f deployment.yaml"
+                        sh "kubectl apply -f service.yaml"
+                        // sh "kubectl apply -f ingress.yaml" // Optional
+                    }
+                }
+            }
+            // Optional: Wait for deployment rollout
+            post {
+                success {
+                    sh "kubectl rollout status deployment/devops-demo"
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo "Cleaning up workspace"
+            cleanWs()
+            // optionally docker rmi to save space
+            sh "docker rmi ${REGISTRY}:${IMAGE_TAG} || true"
+        }
+        success {
+            echo "Pipeline completed successfully!"
+        }
+        failure {
+            echo "Pipeline failed! Please check the logs."
+        }
+    }
+}

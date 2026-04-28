@@ -1,0 +1,14 @@
+{
+    "name": "devops-demo-app",
+    "version": "1.0.0",
+    "description": "Simple Node.js Express API for DevOps Project",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "express": "^4.19.0",
+        "prom-client": "^15.1.0",
+        "mongoose": "^8.3.0"
+    }
+}

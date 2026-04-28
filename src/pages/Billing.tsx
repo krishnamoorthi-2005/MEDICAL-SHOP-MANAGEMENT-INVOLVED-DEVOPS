@@ -18,7 +18,19 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { createSale, searchMedicines as apiSearchMedicines, getFrequentItems, searchActiveCustomers, getCustomers, getUsers, updateCustomer, createCustomer, type Customer } from '@/lib/api';
+import {
+  createSale,
+  searchMedicines as apiSearchMedicines,
+  getFrequentItems,
+  searchActiveCustomers,
+  getCustomers,
+  getUsers,
+  updateCustomer,
+  createCustomer,
+  getCustomerHistory,
+  type Customer,
+  type CustomerSale,
+} from '@/lib/api';
 
 interface Medicine {
   _id: string;
@@ -62,65 +74,74 @@ export default function Billing() {
 
   const [regularCustomers, setRegularCustomers] = useState<(Customer & { isAppUser?: boolean })[]>([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
+  const [customerHistory, setCustomerHistory] = useState<CustomerSale[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerEmail, setNewCustomerEmail] = useState('');
+  const [isSavingCustomer, setIsSavingCustomer] = useState(false);
+
+  const loadRegularCustomers = async () => {
+    setIsLoadingCustomers(true);
+    try {
+      const [custResult, usersResult] = await Promise.all([
+        getCustomers({ active: true, limit: 100 }),
+        getUsers(),
+      ]);
+
+      const custList: Customer[] = Array.isArray(custResult)
+        ? custResult
+        : (custResult.data || custResult.customers || []);
+
+      const allUsers = usersResult || [];
+      const customerUsers = allUsers.filter(
+        (u: any) => u.role?.toLowerCase() === 'user' || u.role?.toLowerCase() === 'patient'
+      );
+
+      // Start with real Customer records
+      const merged: (Customer & { isAppUser?: boolean })[] = custList.map(c => {
+        const customerRecord = c as Customer & { isAppUser?: boolean };
+        const isAppUser = customerUsers.some(
+          (u: any) => u.email && customerRecord.email && u.email.toLowerCase() === customerRecord.email.toLowerCase()
+        );
+        return { ...customerRecord, isAppUser };
+      });
+
+      // Add app-only users who have no Customer record yet
+      customerUsers.forEach((u: any) => {
+        const exists = merged.some(
+          c => c.email && u.email && c.email.toLowerCase() === u.email.toLowerCase()
+        );
+        if (!exists) {
+          merged.push({
+            _id: u.id,
+            name: u.name,
+            email: u.email,
+            phone: u.phone || '',
+            isActive: u.status === 'active',
+            totalSpent: 0,
+            totalVisits: 0,
+            isAppUser: true,
+            createdAt: u.createdAt,
+            updatedAt: u.createdAt,
+          } as any);
+        }
+      });
+
+      setRegularCustomers(merged.filter(c => c._id && c.name));
+    } catch (error) {
+      console.error('Customer load failed:', error);
+    } finally {
+      setIsLoadingCustomers(false);
+    }
+  };
 
   // Load all active regular customers when tab becomes 'regular'
   useEffect(() => {
     if (customerMode === 'regular' && regularCustomers.length === 0) {
-      const loadCustomers = async () => {
-        setIsLoadingCustomers(true);
-        try {
-          const [custResult, usersResult] = await Promise.all([
-            getCustomers({ active: true, limit: 100 }),
-            getUsers(),
-          ]);
-
-          const custList: Customer[] = Array.isArray(custResult)
-            ? custResult
-            : (custResult.data || custResult.customers || []);
-
-          const allUsers = usersResult || [];
-          const customerUsers = allUsers.filter(
-            (u: any) => u.role?.toLowerCase() === 'user' || u.role?.toLowerCase() === 'patient'
-          );
-
-          // Start with real Customer records
-          const merged: (Customer & { isAppUser?: boolean })[] = custList.map(c => {
-            const customerRecord = c as Customer & { isAppUser?: boolean };
-            const isAppUser = customerUsers.some(
-              (u: any) => u.email && customerRecord.email && u.email.toLowerCase() === customerRecord.email.toLowerCase()
-            );
-            return { ...customerRecord, isAppUser };
-          });
-
-          // Add app-only users who have no Customer record yet
-          customerUsers.forEach((u: any) => {
-            const exists = merged.some(
-              c => c.email && u.email && c.email.toLowerCase() === u.email.toLowerCase()
-            );
-            if (!exists) {
-              merged.push({
-                _id: u.id,
-                name: u.name,
-                email: u.email,
-                phone: u.phone || '',
-                isActive: u.status === 'active',
-                totalSpent: 0,
-                totalVisits: 0,
-                isAppUser: true,
-                createdAt: u.createdAt,
-                updatedAt: u.createdAt,
-              } as any);
-            }
-          });
-
-          setRegularCustomers(merged.filter(c => c._id && c.name));
-        } catch (error) {
-          console.error('Customer load failed:', error);
-        } finally {
-          setIsLoadingCustomers(false);
-        }
-      };
-      loadCustomers();
+      loadRegularCustomers();
     }
   }, [customerMode, regularCustomers.length]);
 
@@ -284,7 +305,37 @@ export default function Billing() {
     setSelectedCustomer(null);
     setCustomerSearchQuery('');
     setNextPurchaseDate('');
+    setCustomerHistory([]);
     setPaymentMethod('cash');
+  };
+
+  const handleSelectCustomer = async (c: Customer & { isAppUser?: boolean }) => {
+    setSelectedCustomer(c);
+    setShowCustomerModal(false);
+    setCustomerSearchQuery('');
+
+    // Initialize next purchase date from existing customer data when available
+    if (c.nextPurchaseDate) {
+      const raw = c.nextPurchaseDate;
+      const formatted = raw.includes('T') ? new Date(raw).toISOString().split('T')[0] : raw;
+      setNextPurchaseDate(formatted);
+    } else {
+      setNextPurchaseDate('');
+    }
+
+    setIsLoadingHistory(true);
+    setCustomerHistory([]);
+    try {
+      if (c._id) {
+        const history = await getCustomerHistory(c._id);
+        setCustomerHistory(history.sales || []);
+      }
+    } catch (error) {
+      console.error('Failed to load customer history:', error);
+      setCustomerHistory([]);
+    } finally {
+      setIsLoadingHistory(false);
+    }
   };
 
   const processPayment = async () => {
@@ -671,6 +722,7 @@ export default function Billing() {
                               setSelectedCustomer(null);
                               setCustomerSearchQuery('');
                               setNextPurchaseDate('');
+                              setCustomerHistory([]);
                               setShowCustomerResults(false);
                             }}
                           >
@@ -745,6 +797,32 @@ export default function Billing() {
                             onChange={(e) => setNextPurchaseDate(e.target.value)}
                             className="h-9 text-sm border-indigo-200/60"
                           />
+                          {/* Recent Orders */}
+                          <div className="mt-3 space-y-2">
+                            <div className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wide">Recent Orders</div>
+                            {isLoadingHistory ? (
+                              <p className="text-xs text-muted-foreground/70">Loading order history...</p>
+                            ) : customerHistory.length === 0 ? (
+                              <p className="text-xs text-muted-foreground/70">No previous orders found for this customer.</p>
+                            ) : (
+                              <div className="space-y-1">
+                                {customerHistory.slice(0, 5).map((sale) => (
+                                  <div key={sale._id} className="flex justify-between text-xs text-muted-foreground/80">
+                                    <span>
+                                      {sale.invoiceNumber || sale._id.slice(0, 8)}
+                                      {" · "}
+                                      {new Date(sale.createdAt).toLocaleDateString('en-IN', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric',
+                                      })}
+                                    </span>
+                                    <span className="font-semibold">₹{sale.total.toLocaleString()}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -763,6 +841,20 @@ export default function Billing() {
                     >
                       <User className="h-5 w-5 mr-2" />
                       Select Regular Customer
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setNewCustomerName('');
+                        setNewCustomerPhone('');
+                        setNewCustomerEmail('');
+                        setShowAddCustomerModal(true);
+                      }}
+                      className="w-full h-11 text-sm font-semibold border-dashed"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add New Regular Customer
                     </Button>
                     <p className="text-center text-sm text-muted-foreground/70 pt-2">
                       Click above to choose from {regularCustomers.length} regular customer{regularCustomers.length !== 1 ? 's' : ''}
@@ -843,9 +935,7 @@ export default function Billing() {
                   <button
                     key={c._id || idx}
                     onClick={() => {
-                      setSelectedCustomer(c);
-                      setShowCustomerModal(false);
-                      setCustomerSearchQuery('');
+                      void handleSelectCustomer(c as any);
                     }}
                     className="w-full rounded-lg px-5 py-4 transition-all duration-200 text-left group border-0 bg-white hover:bg-indigo-50 border border-gray-100"
                   >
@@ -910,6 +1000,94 @@ export default function Billing() {
               className="h-11 px-6 text-base font-semibold rounded-xl"
             >
               Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Regular Customer Modal */}
+      <Dialog open={showAddCustomerModal} onOpenChange={setShowAddCustomerModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-bold">Add Regular Customer</DialogTitle>
+            <DialogDescription className="text-muted-foreground/70">
+              Create a regular customer record. It will appear in the Customers section and in this billing screen.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-xs font-semibold text-muted-foreground/80">Name</Label>
+              <Input
+                value={newCustomerName}
+                onChange={(e) => setNewCustomerName(e.target.value)}
+                placeholder="Customer name"
+                className="mt-1 h-10 text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold text-muted-foreground/80">Phone</Label>
+              <Input
+                value={newCustomerPhone}
+                onChange={(e) => setNewCustomerPhone(e.target.value)}
+                placeholder="10-digit phone number"
+                className="mt-1 h-10 text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold text-muted-foreground/80">Email (optional)</Label>
+              <Input
+                type="email"
+                value={newCustomerEmail}
+                onChange={(e) => setNewCustomerEmail(e.target.value)}
+                placeholder="email@example.com"
+                className="mt-1 h-10 text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowAddCustomerModal(false)}
+              disabled={isSavingCustomer}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={async () => {
+                if (!newCustomerName.trim() || !newCustomerPhone.trim()) {
+                  toast({ title: 'Missing Details', description: 'Name and phone are required for a regular customer.', variant: 'destructive' });
+                  return;
+                }
+                setIsSavingCustomer(true);
+                try {
+                  const result = await createCustomer({
+                    name: newCustomerName.trim(),
+                    phone: newCustomerPhone.trim(),
+                    email: newCustomerEmail.trim() || undefined,
+                  });
+                  const created = result.customer || result.data || result;
+                  toast({ title: 'Customer Added', description: 'Regular customer has been created successfully.' });
+                  setShowAddCustomerModal(false);
+                  setNewCustomerName('');
+                  setNewCustomerPhone('');
+                  setNewCustomerEmail('');
+                  await loadRegularCustomers();
+                  if (created && created._id) {
+                    await handleSelectCustomer(created as any);
+                  }
+                } catch (error: any) {
+                  toast({ title: 'Failed to Add Customer', description: error?.message || 'Could not create customer.', variant: 'destructive' });
+                } finally {
+                  setIsSavingCustomer(false);
+                }
+              }}
+              disabled={isSavingCustomer}
+              className="text-white font-semibold"
+              style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}
+            >
+              {isSavingCustomer ? 'Saving...' : 'Save Customer'}
             </Button>
           </DialogFooter>
         </DialogContent>

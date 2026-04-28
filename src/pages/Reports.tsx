@@ -187,6 +187,83 @@ export default function Reports() {
     URL.revokeObjectURL(url);
   };
 
+  const exportFullReport = () => {
+    if (!report) return;
+
+    // Build the report summary
+    const reportSummary = [
+      ['REPORT SUMMARY'],
+      ['Period', `${report.range.start} to ${report.range.end}`],
+      [''],
+      ['TOTALS'],
+      ['Total Sales', `₹${(totalSales || 0).toLocaleString()}`],
+      ['Net Profit', `₹${(netProfit || 0).toLocaleString()}`],
+      ['Bill Count', String(report.totals?.billCount || 0)],
+      ['Items Sold', String(report.totals?.itemsSold || 0)],
+      [''],
+      ['LOSSES & ISSUES'],
+      ['Expiry Loss', `₹${(expiryLoss || 0).toLocaleString()}`],
+      ['Expired Items', String(expiredItemCount || 0)],
+      ['Dead Stock Value', `₹${(report.deadStockValue || 0).toLocaleString()}`],
+      ['Dead Stock Items', String(deadStockItems || 0)],
+      [''],
+      ['DAILY SALES'],
+      ['Date', 'Sales (₹)', 'Profit (₹)', 'Bills', 'Items Sold'],
+      ...(dailySalesData || []).map((d) => [
+        d.date || '',
+        String(d.sales || 0),
+        String(d.profit || 0),
+        String(d.bills || 0),
+        String(d.itemsSold || 0)
+      ]),
+      [''],
+      ['TOP SELLING ITEMS'],
+      ['Item', 'Quantity', 'Revenue (₹)'],
+      ...(topSellingItemsData || []).map((item) => [
+        item.name || '',
+        String(item.quantity || 0),
+        String(item.revenue || 0)
+      ]),
+      [''],
+      ['PAYMENT MODES'],
+      ['Mode', 'Count', 'Total (₹)'],
+      ...(paymentModes || []).map((p) => [
+        (p.mode || 'Unknown').toUpperCase(),
+        String(p.count || 0),
+        String(p.total || 0)
+      ]),
+      [''],
+      ['RECENT INVOICES'],
+      ['Invoice Number', 'Date', 'Total (₹)', 'Payment Method', 'Items'],
+      ...(recentInvoicesData || []).slice(0, 50).map((i) => [
+        i.invoiceNumber || '',
+        i.createdAt ? format(new Date(i.createdAt), 'yyyy-MM-dd HH:mm') : '',
+        String(i.total ?? 0),
+        String(i.paymentMethod ?? ''),
+        String(i.items ?? 0)
+      ])
+    ];
+
+    const csv = reportSummary
+      .map((r) => r.map((v) => `"${String(v).replaceAll('"', '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pharmacy-report-${report.range.start}-to-${report.range.end}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: 'Report exported',
+      description: `Report exported successfully for ${report.range.start} to ${report.range.end}`
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -212,7 +289,7 @@ export default function Reports() {
               {generatingTestData ? 'Generating...' : 'Generate Test Data'}
             </Button>
           )}
-          <Button variant="outline" disabled>
+          <Button variant="outline" onClick={exportFullReport} disabled={loading || !report}>
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>

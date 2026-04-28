@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { TrendingUp, TrendingDown, AlertTriangle, Clock, ArrowRight, Plus, Package, FileText, DollarSign, Timer, Phone, MessageCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertTriangle, Clock, ArrowRight, Plus, Package, FileText, DollarSign, Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getDashboardAnalytics, getCallRequests, updateCallRequestStatus, getDeadStockReport, type CallRequest } from '@/lib/api';
+import { getDashboardAnalytics, getDeadStockReport } from '@/lib/api';
 import { format } from 'date-fns';
 
 const quickActions = [
@@ -20,7 +20,6 @@ export default function Dashboard() {
   const [deadStockCount, setDeadStockCount] = useState<number>(0);
   const [deadStockBatches, setDeadStockBatches] = useState<any[]>([]);
   const [showDeadStockModal, setShowDeadStockModal] = useState(false);
-  const [callRequests, setCallRequests] = useState<CallRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAnalytics = async () => {
@@ -51,27 +50,8 @@ export default function Dashboard() {
     }
   };
 
-  const fetchCallRequests = async () => {
-    try {
-      const requests = await getCallRequests();
-      setCallRequests(requests);
-    } catch (error) {
-      console.error('Failed to fetch call requests:', error);
-    }
-  };
-
-  const handleUpdateCallStatus = async (id: string, status: string) => {
-    try {
-      await updateCallRequestStatus(id, status);
-      fetchCallRequests(); // Refresh the list
-    } catch (error) {
-      console.error('Failed to update call request:', error);
-    }
-  };
-
   useEffect(() => {
     fetchAnalytics();
-    fetchCallRequests();
 
     // Listen for key business events to refresh dashboard analytics
     const handleRefresh = () => {
@@ -85,7 +65,6 @@ export default function Dashboard() {
     // Auto-refresh every 30 seconds
     const interval = setInterval(() => {
       fetchAnalytics();
-      fetchCallRequests();
     }, 30000);
 
     return () => {
@@ -323,77 +302,6 @@ export default function Dashboard() {
                   <h3 className="text-sm font-bold text-foreground/90 mb-1">No transactions yet</h3>
                   <p className="text-xs text-muted-foreground/70">Transaction history will appear here</p>
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Call Requests */}
-        <Card className="border border-border/50 shadow-md transition-all duration-160 hover:shadow-xl hover:-translate-y-0.5">
-          <CardHeader className="pb-3 border-b border-border/40">
-            <CardTitle className="text-base font-bold tracking-tight text-foreground/95 flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              Call Requests
-              {callRequests.filter(req => req.status === 'pending').length > 0 && (
-                <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                  {callRequests.filter(req => req.status === 'pending').length} new
-                </span>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {callRequests.length === 0 ? (
-              <div className="text-center py-4">
-                <MessageCircle className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                <p className="text-sm text-gray-500">No call requests yet</p>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-64 overflow-y-auto">
-                {callRequests.slice(0, 5).map((request) => (
-                  <div key={request.id} className="border rounded-lg p-3 space-y-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium text-sm">{request.name}</p>
-                        <p className="text-xs text-gray-500">{request.phone}</p>
-                        <p className="text-xs text-gray-400">
-                          {format(new Date(request.createdAt), 'MMM dd, yyyy at h:mm a')}
-                        </p>
-                      </div>
-                      <span className={cn(
-                        "px-2 py-1 rounded text-xs font-medium",
-                        request.status === 'pending' && "bg-yellow-100 text-yellow-800",
-                        request.status === 'called' && "bg-blue-100 text-blue-800",
-                        request.status === 'resolved' && "bg-green-100 text-green-800"
-                      )}>
-                        {request.status}
-                      </span>
-                    </div>
-                    {request.message && (
-                      <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
-                        {request.message}
-                      </p>
-                    )}
-                    {request.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleUpdateCallStatus(request.id, 'called')}
-                          className="text-xs"
-                        >
-                          Mark Called
-                        </Button>
-                        <Button 
-                          size="sm"
-                          onClick={() => handleUpdateCallStatus(request.id, 'resolved')}
-                          className="text-xs"
-                        >
-                          Mark Resolved
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))}
               </div>
             )}
           </CardContent>

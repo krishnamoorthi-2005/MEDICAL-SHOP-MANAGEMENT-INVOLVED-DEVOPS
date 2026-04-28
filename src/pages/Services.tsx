@@ -101,7 +101,7 @@ export default function Services() {
 
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { icon: Smartphone, title: 'Patient Portal', desc: 'Track prescriptions, set reminders, and view order history through our patient dashboard.', color: '#6366f1', bg: '#eef2ff' },
+              { icon: Smartphone, title: 'Patient Portal', desc: 'Track prescriptions, set reminders, and view order history through our secure portal.', color: '#6366f1', bg: '#eef2ff' },
               { icon: AlertTriangle, title: 'Medication Alerts', desc: 'Automated reminders for medication times, refills, and important health updates.', color: '#f59e0b', bg: '#fffbeb' },
               { icon: Clock, title: '24/7 Support', desc: 'Round-the-clock customer support for urgent medication questions and emergencies.', color: '#10b981', bg: '#f0fdfa' },
             ].map((s, i) => (

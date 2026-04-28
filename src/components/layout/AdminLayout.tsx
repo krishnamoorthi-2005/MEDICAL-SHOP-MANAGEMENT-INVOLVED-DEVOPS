@@ -4,9 +4,9 @@ import {
   LayoutDashboard, Receipt, Package, ShoppingCart,
   ClipboardCheck, BarChart3, Settings, Search, Bell,
   Plus, ChevronDown, User, LogOut, Activity, Menu, X,
-  Sparkles, Users, ClipboardList, AlertTriangle, Clock, AlertOctagon
+  Sparkles, Users, AlertTriangle, Clock, AlertOctagon
 } from 'lucide-react';
-import { getPrescriptionPendingCount, getDashboardAnalytics } from '@/lib/api';
+import { getDashboardAnalytics } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,7 +19,6 @@ const navigationItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', activeColor: 'text-violet-300', activeBg: 'bg-violet-500/20' },
   { id: 'billing', label: 'Billing', icon: Receipt, path: '/billing', activeColor: 'text-emerald-300', activeBg: 'bg-emerald-500/20' },
   { id: 'customers', label: 'Customers', icon: Users, path: '/customers', activeColor: 'text-teal-300', activeBg: 'bg-teal-500/20' },
-  { id: 'prescriptions', label: 'Prescriptions', icon: ClipboardList, path: '/prescriptions', activeColor: 'text-rose-300', activeBg: 'bg-rose-500/20', badge: true },
   { id: 'inventory', label: 'Inventory', icon: Package, path: '/inventory', activeColor: 'text-sky-300', activeBg: 'bg-sky-500/20' },
   { id: 'purchases', label: 'Purchases', icon: ShoppingCart, path: '/purchases', activeColor: 'text-amber-300', activeBg: 'bg-amber-500/20' },
   { id: 'audit', label: 'Audit', icon: ClipboardCheck, path: '/audit', activeColor: 'text-rose-300', activeBg: 'bg-rose-500/20' },
@@ -43,15 +42,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [pendingRx, setPendingRx] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  useEffect(() => {
-    getPrescriptionPendingCount().then(count => setPendingRx(count));
-    // Refresh every 60 seconds
-    const interval = setInterval(() => getPrescriptionPendingCount().then(c => setPendingRx(c)), 60000);
-    return () => clearInterval(interval);
-  }, []);
+
 
   useEffect(() => {
     const loadNotifications = async () => {
@@ -207,13 +200,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
                 <span className="truncate font-semibold flex-1">{item.label}</span>
 
-                {/* Prescription pending badge */}
-                {(item as any).badge && pendingRx > 0 && !isActive && (
-                  <span className="flex-shrink-0 text-[10px] font-extrabold text-white px-1.5 py-0.5 rounded-full"
-                    style={{ background: '#ef4444', minWidth: '18px', textAlign: 'center' }}>
-                    {pendingRx}
-                  </span>
-                )}
+
 
                 {/* Active indicator pulse */}
                 {isActive && (

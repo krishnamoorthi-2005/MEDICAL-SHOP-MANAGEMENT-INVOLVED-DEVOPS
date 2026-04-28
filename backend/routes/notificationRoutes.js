@@ -33,19 +33,31 @@ router.get('/qr/current', async (req, res) => {
   }
 });
 
-// GET /api/notifications/qr — initialize client and get QR code (public for initial setup)
+// GET /api/notifications/qr — show QR scanner page (initialization is single-shot)
 router.get('/qr', async (req, res) => {
   try {
     const forceInit = req.query.force === '1' || req.query.force === 'true';
     const resetSession = req.query.reset === '1' || req.query.reset === 'true';
 
-    // Try to initialize WhatsApp client
+    // ONLY reinitialize if explicitly forced or reset is requested
+    // Otherwise, let the existing initialization continue
     try {
+      const status = getWhatsAppStatus();
+      
       if (resetSession) {
+        console.log('🔄 Reset requested by user');
         await resetWhatsAppClient();
+        await initializeWhatsAppClient({ force: true, resetSession: false });
+      } else if (forceInit) {
+        console.log('🔄 Force init requested by user');
+        await initializeWhatsAppClient({ force: true, resetSession: false });
+      } else if (!status.initialized) {
+        // Only initialize if client doesn't exist yet
+        console.log('🚀 Starting WhatsApp client initialization');
+        await initializeWhatsAppClient({ force: false, resetSession: false });
+      } else {
+        console.log('✓ WhatsApp client already initialized, skipping reinit');
       }
-
-      await initializeWhatsAppClient({ force: forceInit, resetSession: false });
     } catch (initErr) {
       // If initialization fails, return error page
       console.error('WhatsApp init error:', initErr.message);
@@ -237,14 +249,16 @@ router.get('/qr', async (req, res) => {
                 }
 
                 if (payload.data && payload.data.qrImage) {
-                  window.location.href = '/api/notifications/qr';
+                  // QR image is now available, reload page to display it
+                  document.location.reload();
                   return;
                 }
 
                 if (refreshHint) {
-                  refreshHint.textContent = 'Waiting for the QR image to be generated...';
+                  refreshHint.textContent = 'Waiting for the QR image to be generated... (' + (Math.floor(Date.now() / 1000) % 60) + 's)';
                 }
               } catch (error) {
+                console.error('Poll error:', error);
                 if (refreshHint) {
                   refreshHint.textContent = 'Still waiting. The client may still be starting up.';
                 }
@@ -252,7 +266,7 @@ router.get('/qr', async (req, res) => {
             }
 
             pollQr();
-            setInterval(pollQr, 2500);
+            setInterval(pollQr, 3000);
           </script>
         </body>
         </html>

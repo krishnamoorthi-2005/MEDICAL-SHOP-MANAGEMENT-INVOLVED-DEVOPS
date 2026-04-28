@@ -481,33 +481,6 @@ export default function Audit() {
         <p className="text-sm text-muted-foreground mt-0.5">Physical stock verification and reconciliation</p>
       </div>
 
-      {/* Summary stat cards */}
-      {!auditInProgress && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="rounded-2xl p-5 text-white shadow-sm" style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
-            <div className="text-xs font-semibold opacity-80 uppercase tracking-wider mb-1">Last Audit</div>
-            <div className="text-sm font-bold truncate">
-              {lastAudit ? (() => {
-                const dateStr = (lastAudit as any).createdAt || (lastAudit as any).completedAt;
-                if (!dateStr) return 'No date';
-                try {
-                  return format(new Date(dateStr), 'dd MMM yyyy');
-                } catch (e) {
-                  return 'Invalid Date';
-                }
-              })() : 'No audits yet'}
-            </div>
-          </div>
-          <div className="rounded-2xl p-5 text-white shadow-sm" style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
-            <div className="text-xs font-semibold opacity-80 uppercase tracking-wider mb-1">Audit Status</div>
-            <div className="text-sm font-bold">Ready to Audit</div>
-          </div>
-          <div className="rounded-2xl p-5 text-white shadow-sm hidden md:block" style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}>
-            <div className="text-xs font-semibold opacity-80 uppercase tracking-wider mb-1">Analytics History</div>
-            <div className="text-sm font-bold">{analyticsHistory.length} / 3 saved</div>
-          </div>
-        </div>
-      )}
       {/* Audit Analytics Section */}
       {!auditInProgress && (
         <div className="rounded-2xl bg-white border border-border/50 shadow-sm overflow-hidden">
@@ -1071,40 +1044,42 @@ export default function Audit() {
             )}
 
             {assistantPredictions.length > 0 && (
-              <div className="mt-2 border rounded-xl overflow-hidden max-h-[320px] overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50/80">
-                      <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Medicine</TableHead>
-                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
-                        {assistantPredictionMetadata?.monthName && assistantPredictionMetadata?.previousYear
-                          ? `${assistantPredictionMetadata.monthName} ${assistantPredictionMetadata.previousYear} Sales`
-                          : 'Previous Year Sales'}
-                      </TableHead>
-                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Current Stock</TableHead>
-                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Recommended Purchase</TableHead>
-                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Confidence</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {assistantPredictions.map((p) => (
-                      <TableRow key={p.medicineId}>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium text-sm">{p.medicineName || 'Unknown'}</span>
-                            <span className="font-mono text-[10px] text-muted-foreground">{p.medicineId}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">{(p.previousSales || 0).toLocaleString()}</TableCell>
-                        <TableCell className="text-right font-medium">{p.currentStock.toLocaleString()}</TableCell>
-                        <TableCell className="text-right font-semibold">{p.recommendedPurchase.toLocaleString()}</TableCell>
-                        <TableCell className="text-right text-xs">
-                          {typeof p.confidence === 'number' ? `${Math.round(p.confidence * 100)}%` : '-'}
-                        </TableCell>
+              <div className="mt-2 border rounded-xl overflow-hidden">
+                <div className="overflow-x-auto overflow-y-auto max-h-[400px]">
+                  <Table>
+                    <TableHeader className="sticky top-0 z-10">
+                      <TableRow className="bg-slate-50/80">
+                        <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 min-w-[200px]">Medicine</TableHead>
+                        <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 min-w-[150px]">
+                          {assistantPredictionMetadata?.monthName && assistantPredictionMetadata?.previousYear
+                            ? `${assistantPredictionMetadata.monthName} ${assistantPredictionMetadata.previousYear} Sales`
+                            : 'Previous Year Sales'}
+                        </TableHead>
+                        <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 min-w-[130px]">Current Stock</TableHead>
+                        <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 min-w-[160px]">Recommended Purchase</TableHead>
+                        <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 min-w-[110px]">Confidence</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {assistantPredictions.map((p) => (
+                        <TableRow key={p.medicineId} className="hover:bg-slate-50/60">
+                          <TableCell className="min-w-[200px]">
+                            <div className="flex flex-col">
+                              <span className="font-medium text-sm">{p.medicineName || 'Unknown'}</span>
+                              <span className="font-mono text-[10px] text-muted-foreground truncate">{p.medicineId}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right min-w-[150px]">{(p.previousSales || 0).toLocaleString()}</TableCell>
+                          <TableCell className="text-right font-medium min-w-[130px]">{p.currentStock.toLocaleString()}</TableCell>
+                          <TableCell className="text-right font-semibold text-indigo-600 min-w-[160px]">{p.recommendedPurchase.toLocaleString()}</TableCell>
+                          <TableCell className="text-right text-xs min-w-[110px]">
+                            {typeof p.confidence === 'number' ? `${Math.round(p.confidence * 100)}%` : '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             )}
           </div>

@@ -110,7 +110,7 @@ export default function SubmitPrescription() {
 
                 {/* Top nav */}
                 <div className="flex items-center justify-between mb-8">
-                    <Link to="/user-dashboard" className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors">
+                    <Link to="/" className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors">
                         <ArrowLeft className="h-4 w-4" /> Back to Home
                     </Link>
                     <div className="flex items-center gap-2">

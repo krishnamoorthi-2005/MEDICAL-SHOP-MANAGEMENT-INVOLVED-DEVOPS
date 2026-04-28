@@ -58,19 +58,19 @@ export function PublicLayout({ children }: PublicLayoutProps) {
             <Button variant="ghost" size="sm" asChild className="text-slate-600 hover:text-slate-900">
               <Link to="/login">Login</Link>
             </Button>
-            <Button size="sm" asChild
-              style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', boxShadow: '0 2px 8px rgba(99,102,241,.3)' }}>
-              <Link to="/signup">Sign Up Free</Link>
-            </Button>
+
+
+
+
           </div>
         </div>
-      </nav>
+      </nav >
 
       {/* Main Content */}
-      <main>{children}</main>
+      < main > {children}</main >
 
       {/* Footer */}
-      <footer className="border-t bg-slate-50">
+      < footer className="border-t bg-slate-50" >
         <div className="mx-auto max-w-7xl px-6 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
@@ -83,7 +83,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
             <p className="text-sm text-slate-500">© 2026 Special Access Pharma. All rights reserved.</p>
           </div>
         </div>
-      </footer>
-    </div>
+      </footer >
+    </div >
   );
 }

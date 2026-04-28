@@ -5,10 +5,13 @@ dotenv.config();
 
 const getMongoUri = () => {
   const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
-  if (!uri) {
-    throw new Error('MONGO_URI environment variable is required for MongoDB connection');
+  if (uri) {
+    return uri;
   }
-  return uri;
+
+  const fallbackUri = 'mongodb://127.0.0.1:27017/medical-shop-management';
+  console.warn('MONGO_URI not set – falling back to local MongoDB at', fallbackUri);
+  return fallbackUri;
 };
 
 let isConnected = false;
@@ -42,7 +45,8 @@ const connectDB = async () => {
     await mongoose.connect(uri, mongoOptions);
 
     isConnected = true;
-    console.log('✅ Connected to MongoDB via Mongoose');
+    console.log('🔗 QR Code endpoint: http://localhost:3004/api/notifications/qr');
+console.log('✅ Connected to MongoDB via Mongoose');
     console.log(`📦 Database name: ${mongoose.connection.name}`);
     return mongoose.connection;
   } catch (error) {

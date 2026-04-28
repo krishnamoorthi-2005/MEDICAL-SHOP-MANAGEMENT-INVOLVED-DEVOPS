@@ -1,0 +1,9 @@
+node_modules
+.git
+.temp
+dist
+build
+backend
+devops-project
+train_data set
+uploads

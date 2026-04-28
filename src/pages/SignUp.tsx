@@ -35,7 +35,8 @@ export default function SignUp() {
       if (role === 'staff') {
         navigate('/staff', { replace: true });
       } else if (role === 'patient' || role === 'user') {
-        navigate('/user-dashboard', { replace: true });
+        // Patient/user roles now land on prescription submission instead of a user dashboard
+        navigate('/submit-prescription', { replace: true });
       } else {
         navigate('/dashboard', { replace: true });
       }
@@ -99,7 +100,7 @@ export default function SignUp() {
       // Role-aware redirect
       const role = (result.user?.role || '').toLowerCase();
       if (role === 'staff') navigate('/staff');
-      else if (role === 'patient' || role === 'user') navigate('/user-dashboard');
+      else if (role === 'patient' || role === 'user') navigate('/submit-prescription');
       else navigate('/dashboard'); // admin, manager, cashier, auditor
     } catch (err: any) {
       const msg = (err?.message || '').toLowerCase();

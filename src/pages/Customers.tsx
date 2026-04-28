@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Users, UserPlus, Trash2, Mail, Phone, Calendar, Search, Lock, User } from 'lucide-react';
+import { Users, UserPlus, Trash2, Mail, Phone, Calendar, Search, Lock, User, ReceiptIndianRupee, X } from 'lucide-react';
 import {
     getCustomers,
+    getCustomerHistory,
+    getSaleByIdOrInvoice,
     createCustomer,
     deleteCustomer,
     getUsers,
@@ -10,6 +12,7 @@ import {
     updateUserStatus,
     type Customer,
     type AppUser,
+    type CustomerSale,
 } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
@@ -42,6 +45,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { format } from 'date-fns';
+import InvoiceModal, { type InvoiceData } from '@/components/InvoiceModal';
 
 export default function Customers() {
     const { toast } = useToast();
@@ -70,6 +74,13 @@ export default function Customers() {
         password: '',
         role: 'Staff'
     });
+
+    // Customer detail & invoice state
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [customerHistory, setCustomerHistory] = useState<CustomerSale[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
+    const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
 
     const loadCustomers = async (search?: string) => {
         setLoadingCustomers(true);
@@ -154,6 +165,60 @@ export default function Customers() {
     }
 
     // -- Customers Handlers --
+    const handleViewCustomer = async (customer: Customer & { isAppUser?: boolean }) => {
+        setSelectedCustomer(customer);
+        setCustomerHistory([]);
+        setLoadingHistory(true);
+        try {
+            if (customer._id) {
+                const history = await getCustomerHistory(customer._id);
+                setCustomerHistory(history.sales || []);
+            }
+        } catch (error: any) {
+            toast({
+                title: 'Error',
+                description: error.message || 'Failed to load purchase history',
+                variant: 'destructive',
+            });
+        } finally {
+            setLoadingHistory(false);
+        }
+    };
+
+    const handleOpenInvoice = async (sale: CustomerSale) => {
+        try {
+            const data = await getSaleByIdOrInvoice(sale._id || sale.invoiceNumber);
+            const items = (data.items || []).map((it: any) => ({
+                medicineName: it.medicineName,
+                quantity: it.quantity,
+                unitPrice: it.unitPrice,
+                lineTotal: it.lineTotal,
+            }));
+
+            const invoice: InvoiceData = {
+                _id: data._id,
+                invoiceNumber: data.invoiceNumber,
+                customerName: data.customerName,
+                paymentMethod: data.paymentMethod,
+                paymentStatus: data.paymentStatus || 'paid',
+                items,
+                subtotal: data.subtotal ?? data.total,
+                taxAmount: data.taxAmount ?? 0,
+                discountAmount: data.discountAmount ?? 0,
+                total: data.total,
+                createdAt: data.createdAt,
+            };
+
+            setSelectedInvoice(invoice);
+            setInvoiceModalOpen(true);
+        } catch (error: any) {
+            toast({
+                title: 'Error',
+                description: error.message || 'Failed to load invoice',
+                variant: 'destructive',
+            });
+        }
+    };
     const handleAddCustomer = async () => {
         if (!newCustomer.name || !newCustomer.phone) {
             toast({
@@ -329,9 +394,11 @@ export default function Customers() {
                         </Button>
                     </div>
 
-                    <Card className="border border-border/60 shadow-sm overflow-hidden rounded-xl">
-                        <CardContent className="p-0">
-                            <Table>
+
+                    <div className="grid lg:grid-cols-1 gap-4 items-start">
+                        <Card className="border border-border/60 shadow-sm overflow-hidden rounded-xl">
+                            <CardContent className="p-0">
+                                <Table>
                                 <TableHeader>
                                     <TableRow className="bg-slate-50/80 hover:bg-slate-50/80 border-b border-border/60">
                                         <TableHead className="pl-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Name</TableHead>
@@ -339,6 +406,7 @@ export default function Customers() {
                                         <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Status</TableHead>
                                         <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Visits</TableHead>
                                         <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Total Spent</TableHead>
+                                        <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Next Visit</TableHead>
                                         <TableHead className="text-right pr-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 py-3">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -383,7 +451,7 @@ export default function Customers() {
                                                         </div>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell className="cursor-pointer" onClick={() => handleViewCustomer(customer)}>
                                                     <div className="space-y-1 text-sm">
                                                         <div className="flex items-center gap-1.5 text-slate-700">
                                                             <Phone className="h-3.5 w-3.5 text-muted-foreground" />
@@ -411,7 +479,22 @@ export default function Customers() {
                                                 <TableCell>
                                                     <span className="font-semibold text-emerald-600">₹{customer.totalSpent?.toFixed(2) || '0.00'}</span>
                                                 </TableCell>
-                                                <TableCell className="text-right pr-6">
+                                                <TableCell>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {customer.nextPurchaseDate
+                                                            ? format(new Date(customer.nextPurchaseDate), 'PP')
+                                                            : 'Not set'}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right pr-6 space-x-1">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleViewCustomer(customer)}
+                                                        className="mr-1"
+                                                    >
+                                                        View
+                                                    </Button>
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
@@ -427,7 +510,102 @@ export default function Customers() {
                                 </TableBody>
                             </Table>
                         </CardContent>
-                    </Card>
+                        </Card>
+
+                        {/* Customer Details Modal with Glass Backdrop */}
+                        <Dialog open={!!selectedCustomer} onOpenChange={(open) => !open && setSelectedCustomer(null)}>
+                            <DialogContent className="max-w-2xl border-0 shadow-2xl bg-white/95 backdrop-blur-md">
+                                <DialogHeader className="border-b border-border/20 pb-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                                                <Users className="h-6 w-6 text-indigo-500" />
+                                                {selectedCustomer?.name}
+                                            </DialogTitle>
+                                            <DialogDescription className="mt-2 text-sm">
+                                                Purchase history & next visit details
+                                            </DialogDescription>
+                                        </div>
+                                    </div>
+                                </DialogHeader>
+
+                                <div className="space-y-4 py-4">
+                                    {selectedCustomer?.nextPurchaseDate && (
+                                        <div className="p-4 bg-gradient-to-r from-emerald-50 to-emerald-100/50 rounded-lg border border-emerald-200/60">
+                                            <div className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Next Visit</div>
+                                            <div className="text-lg font-bold text-emerald-900 mt-1">
+                                                {format(new Date(selectedCustomer.nextPurchaseDate), 'PPP')}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                                            <Calendar className="h-4 w-4 text-indigo-500" />
+                                            Purchase History
+                                        </h3>
+                                        <div className="border border-border/40 rounded-lg overflow-hidden">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow className="bg-slate-50/60 hover:bg-slate-50/60  border-b border-border/30">
+                                                        <TableHead className="pl-4 text-xs font-semibold">Date</TableHead>
+                                                        <TableHead className="text-xs font-semibold">Invoice</TableHead>
+                                                        <TableHead className="text-xs font-semibold">Payment</TableHead>
+                                                        <TableHead className="text-right pr-4 text-xs font-semibold">Total</TableHead>
+                                                        <TableHead className="text-right pr-4 text-xs font-semibold">View</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {loadingHistory ? (
+                                                        <TableRow>
+                                                            <TableCell colSpan={5} className="text-center py-6 text-xs text-muted-foreground">
+                                                                <div className="flex justify-center">
+                                                                    <div className="h-5 w-5 rounded-full border-2 border-indigo-300 border-t-indigo-600 animate-spin" />
+                                                                </div>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ) : customerHistory.length === 0 ? (
+                                                        <TableRow>
+                                                            <TableCell colSpan={5} className="text-center py-6 text-xs text-muted-foreground">
+                                                                No purchases found for this customer yet.
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ) : (
+                                                        customerHistory.map((sale) => (
+                                                            <TableRow key={sale._id} className="border-b border-border/20 hover:bg-slate-50/40 transition-colors">
+                                                                <TableCell className="pl-4 text-xs">
+                                                                    {format(new Date(sale.createdAt), 'PP p')}
+                                                                </TableCell>
+                                                                <TableCell className="text-xs font-mono text-muted-foreground">
+                                                                    {sale.invoiceNumber || sale._id.slice(0, 8)}
+                                                                </TableCell>
+                                                                <TableCell className="text-xs capitalize">
+                                                                    {sale.paymentMethod}
+                                                                </TableCell>
+                                                                <TableCell className="text-right pr-4 text-xs font-semibold text-emerald-700">
+                                                                    ₹{sale.total.toFixed(2)}
+                                                                </TableCell>
+                                                                <TableCell className="text-right pr-4">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-8 w-8 hover:bg-indigo-50"
+                                                                        onClick={() => handleOpenInvoice(sale)}
+                                                                    >
+                                                                        <ReceiptIndianRupee className="h-4 w-4 text-indigo-600" />
+                                                                    </Button>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </TabsContent>
 
                 <TabsContent value="users" className="space-y-4">
@@ -674,6 +852,16 @@ export default function Customers() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Invoice Modal */}
+            <InvoiceModal
+                open={invoiceModalOpen}
+                onClose={() => {
+                    setInvoiceModalOpen(false);
+                    setSelectedInvoice(null);
+                }}
+                invoice={selectedInvoice}
+            />
         </div>
     );
 }

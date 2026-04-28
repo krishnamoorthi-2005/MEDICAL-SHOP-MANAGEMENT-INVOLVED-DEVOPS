@@ -2,6 +2,7 @@ import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
 import qrcode from 'qrcode';
 import fs from 'fs/promises';
+import { existsSync } from 'fs';
 import path from 'path';
 import Medicine from '../models/Medicine.js';
 import Batch from '../models/Batch.js';
@@ -70,15 +71,33 @@ export const initializeWhatsAppClient = async (options = {}) => {
       }
 
       const buildClient = () => {
+        const browserPath = process.platform === 'win32' ? [
+          'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+          'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+          'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
+        ].find(p => existsSync(p)) : undefined;
+
         whatsappClient = new Client({
           authStrategy: new LocalAuth({
             clientId: 'pharmacy-bot'
           }),
+          webVersionCache: {
+            type: 'remote',
+            remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
+          },
           puppeteer: {
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+            args: [
+              '--no-sandbox',
+              '--disable-setuid-sandbox',
+              '--disable-gpu',
+              '--disable-dev-shm-usage',
+              '--disable-accelerated-2d-canvas',
+              '--no-first-run',
+              '--no-zygote'
+            ],
             timeout: 120000,
-            executablePath: process.platform === 'win32' ? undefined : undefined
+            executablePath: browserPath
           }
         });
 

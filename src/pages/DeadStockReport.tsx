@@ -129,40 +129,42 @@ export default function DeadStockReport() {
             <p className="text-xs text-red-500 mb-4">{predictionError}</p>
           )}
           {predictions.length > 0 ? (
-            <div className="overflow-auto max-h-[50vh] rounded-xl border border-border/50">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50/80">
-                    <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Medicine</TableHead>
-                    <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
-                      {predictionMetadata?.monthName && predictionMetadata?.previousYear
-                        ? `${predictionMetadata.monthName} ${predictionMetadata.previousYear} Sales`
-                        : 'Previous Year Sales'}
-                    </TableHead>
-                    <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Current Stock</TableHead>
-                    <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Recommended Purchase</TableHead>
-                    <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Confidence</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {predictions.map((p) => (
-                    <TableRow key={p.medicineId} className="hover:bg-slate-50/60">
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium text-sm">{p.medicineName || 'Unknown'}</span>
-                          <span className="font-mono text-[10px] text-muted-foreground">{p.medicineId}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">{(p.previousSales || 0).toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-medium">{p.currentStock.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-semibold text-indigo-600">{p.recommendedPurchase.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-xs">
-                        {typeof p.confidence === 'number' ? `${Math.round(p.confidence * 100)}%` : '-'}
-                      </TableCell>
+            <div className="rounded-xl border border-border/50 overflow-hidden">
+              <div className="overflow-x-auto overflow-y-auto max-h-[60vh]">
+                <Table>
+                  <TableHeader className="sticky top-0 z-10">
+                    <TableRow className="bg-slate-50/80">
+                      <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 min-w-[200px]">Medicine</TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 min-w-[150px]">
+                        {predictionMetadata?.monthName && predictionMetadata?.previousYear
+                          ? `${predictionMetadata.monthName} ${predictionMetadata.previousYear} Sales`
+                          : 'Previous Year Sales'}
+                      </TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 min-w-[130px]">Current Stock</TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 min-w-[160px]">Recommended Purchase</TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 min-w-[110px]">Confidence</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {predictions.map((p) => (
+                      <TableRow key={p.medicineId} className="hover:bg-slate-50/60">
+                        <TableCell className="min-w-[200px]">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-sm">{p.medicineName || 'Unknown'}</span>
+                            <span className="font-mono text-[10px] text-muted-foreground truncate">{p.medicineId}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right min-w-[150px]">{(p.previousSales || 0).toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-medium min-w-[130px]">{p.currentStock.toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-semibold text-indigo-600 min-w-[160px]">{p.recommendedPurchase.toLocaleString()}</TableCell>
+                        <TableCell className="text-right text-xs min-w-[110px]">
+                          {typeof p.confidence === 'number' ? `${Math.round(p.confidence * 100)}%` : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           ) : (
             <div className="text-center py-10 text-muted-foreground">

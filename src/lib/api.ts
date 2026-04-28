@@ -866,6 +866,21 @@ export const getCustomerHistory = async (id: string): Promise<{ sales: CustomerS
   return result;
 };
 
+// Get full sale (invoice) details by ID or invoice number
+export const getSaleByIdOrInvoice = async (idOrInvoice: string) => {
+  const response = await fetch(`${API_BASE_URL}/sales/${encodeURIComponent(idOrInvoice)}`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    await handleAuthError(response, 'Failed to fetch sale');
+    throw new Error('Failed to fetch sale');
+  }
+
+  const result = await response.json();
+  return result.data;
+};
+
 // Get my customer info (for logged-in users to see their own data)
 export const getMyCustomerInfo = async (email?: string, phone?: string): Promise<{
   success: boolean;

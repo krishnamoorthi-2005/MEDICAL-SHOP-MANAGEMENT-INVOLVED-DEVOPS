@@ -1,0 +1,13 @@
+[
+  {
+    "IpProtocol": "tcp",
+    "FromPort": 80,
+    "ToPort": 80,
+    "Ipv6Ranges": [
+      {
+        "CidrIpv6": "::/0",
+        "Description": "Allow IPv6 HTTP from mobile 4G"
+      }
+    ]
+  }
+]

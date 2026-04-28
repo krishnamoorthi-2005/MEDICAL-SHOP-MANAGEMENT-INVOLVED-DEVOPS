@@ -19,7 +19,6 @@ import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import StaffDashboard from "./pages/StaffDashboard";
 import StaffInventory from "./pages/StaffInventory";
-import NewUserDashboard from "./pages/NewUserDashboard";
 import SubmitPrescription from "./pages/SubmitPrescription";
 import Billing from "./pages/Billing";
 import Customers from "./pages/Customers";
@@ -129,14 +128,6 @@ const AppRouter = () => {
       />
 
       {/* Patient/User Routes */}
-      <Route
-        path="/user-dashboard"
-        element={
-          <ProtectedRoute>
-            <NewUserDashboard />
-          </ProtectedRoute>
-        }
-      />
       <Route
         path="/submit-prescription"
         element={

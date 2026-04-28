@@ -4,71 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { searchMedicinesPublic, createCallRequest } from '@/lib/api';
+import { createCallRequest } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Phone, Mail, MapPin, Clock, Shield, Pill, Heart, Star, CheckCircle2, ArrowRight, Sparkles, Activity, Package, Users, TrendingUp, AlertCircle, Lock, Zap, BarChart3, Brain } from 'lucide-react';
 
 export default function FrontPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [isSuggesting, setIsSuggesting] = useState(false);
   const [callRequestForm, setCallRequestForm] = useState({ name: '', phone: '', message: '' });
   const [isSubmittingCall, setIsSubmittingCall] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    const trimmedQuery = searchQuery.trim();
-    let cancelled = false;
-
-    if (trimmedQuery.length < 2) {
-      setSearchSuggestions([]);
-      setIsSuggesting(false);
-      return;
-    }
-
-    const timeoutId = window.setTimeout(async () => {
-      setIsSuggesting(true);
-
-      try {
-        const results = await searchMedicinesPublic(trimmedQuery);
-        if (!cancelled) {
-          setSearchSuggestions(results.slice(0, 5));
-        }
-      } catch {
-        if (!cancelled) {
-          setSearchSuggestions([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsSuggesting(false);
-        }
-      }
-    }, 250);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeoutId);
-    };
-  }, [searchQuery]);
-
-  const handleMedicineSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-    setIsSearching(true);
-    try {
-      const results = await searchMedicinesPublic(searchQuery);
-      setSearchResults(results);
-      if (results.length === 0) {
-        toast({ title: 'No Results', description: 'No medicines found matching your search.' });
-      }
-    } catch {
-      toast({ title: 'Search Error', description: 'Failed to search medicines. Please try again.', variant: 'destructive' });
-    } finally {
-      setIsSearching(false);
-    }
-  };
 
   const handleCallRequest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,142 +90,8 @@ export default function FrontPage() {
           </div>
         </div>
       </section>
-
-      {/* ════ MEDICINE SEARCH - MAIN FEATURE ═════════════════════════════ */}
-      <section className="py-32 px-6 relative overflow-hidden">
-        {/* Background gradient with animated orbs */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #f0f9ff 0%, #f3e8ff 40%, #fef2f2 100%)' }} />
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full blur-3xl opacity-30" style={{ background: 'linear-gradient(135deg, #4f46e5, #5b21b6)' }} />
-        <div className="absolute -bottom-32 -left-32 w-72 h-72 rounded-full blur-3xl opacity-25" style={{ background: '#10b981' }} />
-        
-        <div className="max-w-5xl mx-auto relative z-10">
-          {/* Primary Feature Badge */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-extrabold mb-6" style={{ background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(16, 185, 129, 0.15))', color: '#4f46e5' }}>
-              <Sparkles className="h-4 w-4" />
-              🎯 MAIN FEATURE - Real-Time Availability
-            </div>
-          </div>
-
-          {/* Main Heading */}
-          <div className="text-center mb-16">
-            <h2 className="text-6xl font-black text-slate-900 mb-4 leading-tight">
-              Find Your Medicine
-              <br />
-              <span style={{ 
-                background: 'linear-gradient(135deg, #4f46e5, #10b981, #ec4899)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
-              }}>Instantly & Accurately</span>
-            </h2>
-            <p className="text-xl text-slate-600 font-semibold max-w-3xl mx-auto">
-              Check real-time availability, competitive pricing, and stock status for over 10,000+ medicines. Never miss out on availability again.
-            </p>
-          </div>
-
-          {/* Search Form - Enhanced */}
-          <form onSubmit={handleMedicineSearch} className="flex gap-4 mb-8 backdrop-blur-sm">
-            <div className="flex-1 relative group">
-              <div className="absolute inset-0 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.2), rgba(16, 185, 129, 0.2))' }} />
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-6 w-6 z-10" style={{ color: '#4f46e5' }} />
-              <Input
-                type="text"
-                placeholder="Try: Aspirin, Paracetamol, Cough Syrup, Amoxicillin..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-16 h-16 rounded-2xl border-3 border-white focus:border-indigo-300 text-base font-medium transition-all duration-300 focus:shadow-2xl relative"
-                style={{ background: '#ffffff', color: '#1f2937' }}
-              />
-            </div>
-            <Button type="submit" disabled={isSearching} size="lg" className="h-16 px-10 font-extrabold rounded-2xl text-white shadow-2xl hover:shadow-2xl transition-all hover:-translate-y-1 text-lg"
-              style={{ background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none' }}>
-              {isSearching ? (
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
-                  Searching
-                </div>
-              ) : (
-                <>Search Now</>
-              )}
-            </Button>
-          </form>
-
-          {searchQuery.trim().length >= 2 && (
-            <div className="mb-8 rounded-2xl border-3 border-indigo-200 bg-white/80 backdrop-blur-xl p-8 shadow-xl">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl" style={{ background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.2), rgba(16, 185, 129, 0.2))' }}>
-                    <Sparkles className="h-5 w-5" style={{ color: '#4f46e5' }} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-extrabold text-slate-900">🎯 Recommended Matches</p>
-                    <p className="text-xs text-slate-500">Select any to see availability details</p>
-                  </div>
-                </div>
-                {isSuggesting && <span className="text-xs font-extrabold text-indigo-700 animate-pulse flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full animate-pulse" style={{ background: '#4f46e5' }} />
-                  Finding matches...
-                </span>}
-              </div>
-
-              {searchSuggestions.length === 0 && !isSuggesting ? (
-                <div className="text-center py-8">
-                  <p className="text-base text-slate-600 font-semibold">🔍 No close matches yet</p>
-                  <p className="text-sm text-slate-500 mt-2">Try a different spelling or a brand name</p>
-                </div>
-              ) : (
-                <div className="grid md:grid-cols-2 gap-3 max-h-72 overflow-y-auto">
-                  {searchSuggestions.map((medicine) => (
-                    <button
-                      key={medicine._id}
-                      type="button"
-                      onClick={() => setSearchQuery(medicine.name)}
-                      className="flex justify-between items-center p-4 rounded-xl border-2 border-slate-200 bg-white hover:bg-indigo-50/80 hover:border-indigo-400 transition-all duration-300 text-left shadow-md hover:shadow-lg group hover:-translate-y-1"
-                    >
-                      <div className="flex-1">
-                        <p className="font-bold text-slate-900 text-sm group-hover:text-indigo-900">{medicine.name}</p>
-                        <p className="text-xs text-slate-500 mt-1 group-hover:text-slate-600">{medicine.manufacturerId?.name || 'Unknown manufacturer'}</p>
-                      </div>
-                      <span className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ml-3 ${
-                        medicine.stock > 10 ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-200' : medicine.stock > 0 ? 'bg-amber-100 text-amber-700 ring-2 ring-amber-200' : 'bg-red-100 text-red-700 ring-2 ring-red-200'
-                      }`}>
-                        {medicine.stock > 10 ? '✓ In Stock' : medicine.stock > 0 ? '⚠ Limited' : '✗ Out of Stock'}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {searchResults.length > 0 && (
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              <div className="sticky top-0 bg-white/80 backdrop-blur-sm pb-3 z-10">
-                <p className="text-sm font-extrabold text-slate-900">
-                  ✓ Results Found: <span style={{ color: '#4f46e5' }}>{searchResults.length}</span> medicines
-                </p>
-              </div>
-              {searchResults.slice(0, 8).map((medicine) => (
-                <div key={medicine._id} className="flex justify-between items-center p-5 rounded-xl border-2 border-slate-200 bg-white hover:bg-indigo-50/80 transition-all duration-300 shadow-md hover:shadow-lg group hover:border-indigo-300 hover:-translate-y-1">
-                  <div className="flex-1">
-                    <p className="font-bold text-slate-900 text-base group-hover:text-indigo-900">{medicine.name}</p>
-                    <p className="text-xs text-slate-500 mt-1.5 font-medium group-hover:text-slate-600">{medicine.manufacturerId?.name || 'Unknown'} • SKU: {medicine._id.slice(0, 8)}</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all ring-2 ${
-                      medicine.stock > 10 ? 'bg-emerald-100 text-emerald-700 ring-emerald-200' : medicine.stock > 0 ? 'bg-amber-100 text-amber-700 ring-amber-200' : 'bg-red-100 text-red-700 ring-red-200'
-                    }`}>
-                      {medicine.stock > 10 ? '✓ In Stock' : medicine.stock > 0 ? '⚠ Limited' : '✗ Out of Stock'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-      <section className="py-24 px-6 relative" style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #f0fdf4 50%, #fef2f2 100%)' }}>
+      {/* Medicine availability search section removed from the landing page as requested */}
+      <section className="relative py-20 px-6 bg-white overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl opacity-20" style={{ background: '#5b21b6' }} />
         
         <div className="max-w-5xl mx-auto relative z-10">

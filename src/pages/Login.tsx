@@ -35,7 +35,8 @@ export default function Login() {
     }
 
     if (role === 'patient' || role === 'user') {
-      navigate('/user-dashboard', { replace: true });
+      // Patient/user roles now land on the prescription submission page instead of a dashboard
+      navigate('/submit-prescription', { replace: true });
       return;
     }
 
@@ -69,7 +70,8 @@ export default function Login() {
       if (role === 'staff') {
         navigate('/staff', { replace: true });
       } else if (role === 'patient' || role === 'user') {
-        navigate('/user-dashboard', { replace: true });
+        // Patient/user roles now go directly to prescription submission instead of a user dashboard
+        navigate('/submit-prescription', { replace: true });
       } else {
         navigate('/dashboard', { replace: true }); // admin, manager, cashier, auditor
       }

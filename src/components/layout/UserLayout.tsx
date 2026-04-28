@@ -23,7 +23,6 @@ export function UserLayout({ children }: UserLayoutProps) {
     };
 
     const navigationItems = [
-        { label: 'Dashboard', path: '/user-dashboard', icon: ClipboardList },
         { label: 'Submit Request', path: '/submit-prescription', icon: FileText },
     ];
 
