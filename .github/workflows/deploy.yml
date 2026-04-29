@@ -31,7 +31,7 @@ jobs:
 
     - name: Build and Push Backend Image
       env:
-        ECR_REPOSITORY: medical-shop-backend
+        ECR_REPOSITORY: devops-demo
         IMAGE_TAG: ${{ github.sha }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest ./backend
@@ -40,7 +40,7 @@ jobs:
 
     - name: Build and Push Frontend Image
       env:
-        ECR_REPOSITORY: medical-shop-frontend
+        ECR_REPOSITORY: devops-frontend
         IMAGE_TAG: ${{ github.sha }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest ./devops-project/app
@@ -56,8 +56,8 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         # Apply the new image tags to the deployments
-        kubectl set image deployment/devops-demo devops-demo=$ECR_REGISTRY/medical-shop-backend:$IMAGE_TAG
-        kubectl set image deployment/devops-frontend devops-frontend=$ECR_REGISTRY/medical-shop-frontend:$IMAGE_TAG
+        kubectl set image deployment/devops-demo devops-demo=$ECR_REGISTRY/devops-demo:$IMAGE_TAG
+        kubectl set image deployment/devops-frontend devops-frontend=$ECR_REGISTRY/devops-frontend:$IMAGE_TAG
         
         # Verify rollout status
         kubectl rollout status deployment/devops-demo
