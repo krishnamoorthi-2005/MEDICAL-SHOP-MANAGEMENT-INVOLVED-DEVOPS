@@ -62,8 +62,8 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         # Apply the new image tags to the deployments
-        kubectl set image deployment/devops-demo devops-demo=$ECR_REGISTRY/devops-demo:$IMAGE_TAG
-        kubectl set image deployment/devops-frontend devops-frontend=$ECR_REGISTRY/devops-frontend:$IMAGE_TAG
+        kubectl set image deployment/devops-demo app=$ECR_REGISTRY/devops-demo:$IMAGE_TAG
+        kubectl set image deployment/devops-frontend frontend=$ECR_REGISTRY/devops-frontend:$IMAGE_TAG
         
         # Verify rollout status
         kubectl rollout status deployment/devops-demo
