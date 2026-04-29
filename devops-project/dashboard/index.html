@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps Status Dashboard | Medical Shop</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="glass-bg"></div>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-microchip"></i>
+                <h1>DevOps <span>Portal</span></h1>
+            </div>
+            <div class="status-badge">
+                <span class="pulse"></span>
+                System Operational
+            </div>
+        </header>
+
+        <main>
+            <section class="grid">
+                <!-- Infrastructure Status -->
+                <div class="card glass">
+                    <div class="card-header">
+                        <i class="fas fa-server"></i>
+                        <h2>Infrastructure</h2>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <label>Cluster</label>
+                            <span id="cluster-name">devops-cluster-v3</span>
+                        </div>
+                        <div class="stat-item">
+                            <label>Region</label>
+                            <span>us-east-1</span>
+                        </div>
+                        <div class="stat-item">
+                            <label>Nodes</label>
+                            <span class="highlight">2 Active</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <!-- CI/CD Build Status -->
+                <div class="card glass">
+                    <div class="card-header">
+                        <i class="fas fa-code-branch"></i>
+                        <h2>CI/CD Pipeline</h2>
+                    </div>
+                    <div class="pipeline-info">
+                        <div class="build-status success">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Latest Build: Passed</span>
+                        </div>
+                        <div class="commit-info">
+                            <label>Commit</label>
+                            <code id="commit-sha">main: ${{ github.sha }}</code>
+                        </div>
+                        <a href="https://github.com/krishnamoorthi-2005/MEDICAL-SHOP-MANAGEMENT-INVOLVED-DEVOPS/actions" target="_blank" class="btn secondary">
+                            View Actions <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Live Endpoints -->
+                <div class="card glass">
+                    <div class="card-header">
+                        <i class="fas fa-link"></i>
+                        <h2>Live Endpoints</h2>
+                    </div>
+                    <ul class="links">
+                        <li>
+                            <a href="http://afcf0bd7481aa40ffb6796f2909e6915-1011909786.us-east-1.elb.amazonaws.com" target="_blank">
+                                <i class="fas fa-desktop"></i> Store Frontend
+                            </a>
+                        </li>
+                        <li>
+                            <a href="http://a65725c8985734a16ba4127575b86b69-1652246235.us-east-1.elb.amazonaws.com/api/health" target="_blank">
+                                <i class="fas fa-cogs"></i> Backend API
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Resources Usage -->
+                <div class="card glass full-width">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line"></i>
+                        <h2>Cluster Metrics (Prometheus)</h2>
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="metric-chart">
+                            <label>CPU Usage</label>
+                            <div class="chart-placeholder">
+                                <div class="bar" style="height: 40%;"></div>
+                                <div class="bar" style="height: 60%;"></div>
+                                <div class="bar" style="height: 30%;"></div>
+                                <div class="bar" style="height: 80%;"></div>
+                                <div class="bar" style="height: 50%;"></div>
+                            </div>
+                        </div>
+                        <div class="metric-chart">
+                            <label>Memory Usage</label>
+                            <div class="chart-placeholder">
+                                <div class="bar" style="height: 70%;"></div>
+                                <div class="bar" style="height: 50%;"></div>
+                                <div class="bar" style="height: 90%;"></div>
+                                <div class="bar" style="height: 40%;"></div>
+                                <div class="bar" style="height: 60%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Medical Shop Management System | DevOps Final Presentation</p>
+        </footer>
+    </div>
+</body>
+</html>
