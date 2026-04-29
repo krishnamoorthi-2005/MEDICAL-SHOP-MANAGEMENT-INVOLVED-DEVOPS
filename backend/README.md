@@ -72,11 +72,6 @@ Password: admin123
 
 ## 🔥 Critical Rules Implemented
 
-- ✅ Stock is stored at BATCH level (not medicine level)
-- ✅ Every stock change creates a stock_movement record
-- ✅ Batch-level FEFO support (indexes for First Expiry First Out)
-- ✅ Transaction support enabled
-- ✅ All required indexes applied
 
 ## 📊 Sample Data Included
 
